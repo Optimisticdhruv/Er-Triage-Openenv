@@ -1,0 +1,4 @@
+# file: C:\Users\Dhruv\Downloads\er-triage-openenv\app\models.py
+# hypothesis_version: 6.151.10
+
+[0.0, 0.2, 0.3, 0.5, 1.0, 32.0, 43.0, 100, 120, 150, 250, 'Body temp Celsius', 'Breaths per minute', 'Diastolic BP mmHg', 'Glasgow Coma Scale', 'Heart rate in BPM', 'Pain scale 0-10', 'Systolic BP mmHg', 'task_easy', 'waiting']

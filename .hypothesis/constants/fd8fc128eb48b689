@@ -1,0 +1,4 @@
+# file: C:\Users\Dhruv\Downloads\er-triage-openenv\app\reward.py
+# hypothesis_version: 6.151.10
+
+[-1.0, -0.5, -0.3, -0.1, -0.05, 0.0, 0.05, 0.1, 0.2, 0.25, 0.3, 0.5, 0.9, 1.0, 'acute', 'bed_correct', 'dangerous_errors', 'escalation_correct', 'esi_ground_truth', 'invalid_bed', 'is_fatal_miss', 'is_p1_miss', 'loop_guard', 'mean_reward', 'message', 'minor', 'no actions taken', 'p1_as_p3', 'p1_as_p4', 'pass_threshold_met', 'perfect_actions', 'priority_delta', 'resus', 'steps', 'task_score', 'total_reward', 'waiting_area']

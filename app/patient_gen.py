@@ -88,7 +88,7 @@ def generate_vitals(age: int, category: str, esi_bias: int, rng: np.random.Gener
     
     # Base distributions by esi_bias
     if esi_bias == 1:
-        spo2 = max(70, min(87, round(rng.normal(81, 4))))
+        spo2 = max(60, min(87, round(rng.normal(81, 4))))
         heart_rate = max(130, min(200, round(rng.normal(148, 18))))
         bp_systolic = max(55, min(88, round(rng.normal(78, 10))))
         respiratory_rate = max(28, min(50, round(rng.normal(34, 5))))
@@ -108,7 +108,7 @@ def generate_vitals(age: int, category: str, esi_bias: int, rng: np.random.Gener
         respiratory_rate = max(16, min(26, round(rng.normal(20, 3))))
         gcs = 15
         pain_score = max(0, min(10, round(rng.normal(5, 2))))
-    else:  # esi_bias 4 or 5
+    else:  # esi_bias >= 4: handles both 4 and 5
         spo2 = max(95, min(100, round(rng.normal(98, 1.5))))
         heart_rate = max(55, min(95, round(rng.normal(76, 12))))
         bp_systolic = max(105, min(148, round(rng.normal(126, 14))))
@@ -118,13 +118,13 @@ def generate_vitals(age: int, category: str, esi_bias: int, rng: np.random.Gener
     
     # Temperature by category
     if category == "INFECTION":
-        temperature = round(max(38.0, min(41.0, rng.normal(39.2, 0.6)), 1)
+        temperature = round(max(38.0, min(41.0, rng.normal(39.2, 0.6))), 1)
     elif category == "TRAUMA":
-        temperature = round(max(36.5, min(37.8, rng.normal(37.1, 0.3)), 1)
+        temperature = round(max(36.5, min(37.8, rng.normal(37.1, 0.3))), 1)
     elif category in ["CARDIAC", "RESPIRATORY"]:
-        temperature = round(max(36.0, min(38.5, rng.normal(37.0, 0.4)), 1)
+        temperature = round(max(36.0, min(38.5, rng.normal(37.0, 0.4))), 1)
     elif category == "MINOR":
-        temperature = round(max(36.2, min(37.6, rng.normal(36.8, 0.3)), 1)
+        temperature = round(max(36.2, min(37.6, rng.normal(36.8, 0.3))), 1)
     else:
         temperature = round(rng.normal(37.0, 0.5), 1)
     
@@ -179,7 +179,7 @@ def generate_patient(patient_id: str, arrival_time: float, rng: np.random.Genera
             arrival_mode = "walk_in"
         else:
             arrival_mode = "transfer"
-    else:  # esi_bias 3+
+    else:  # esi_bias >= 3: handles 3, 4, and 5
         mode_roll = rng.random()
         if mode_roll < 0.20:
             arrival_mode = "ambulance"
@@ -195,7 +195,7 @@ def generate_patient(patient_id: str, arrival_time: float, rng: np.random.Genera
         deterioration_risk = float(rng.uniform(0.25, 0.45))
     elif esi_bias == 3:
         deterioration_risk = float(rng.uniform(0.08, 0.20))
-    else:
+    else:  # esi_bias >= 4: handles 4 and 5
         deterioration_risk = 0.0
     
     # Generate vitals
@@ -211,7 +211,7 @@ def generate_patient(patient_id: str, arrival_time: float, rng: np.random.Genera
         arrival_time=arrival_time,
         arrival_mode=arrival_mode,
         vitals=vitals,
-        esi_ground_truth=0,  # Will be set by environment.py
+        esi_ground_truth=1,  # Will be set by environment.py
         waiting_minutes=0.0,
         status="waiting",
         deterioration_risk=deterioration_risk
@@ -243,7 +243,7 @@ def generate_patient_batch(n_patients: int, seed: int = 42) -> list[Patient]:
     # For n_patients >= 10: ensure minimum ESI distribution
     if n_patients >= 10:
         # Count current ESI bias distribution
-        esi_counts = {1: 0, 2: 0, 3: 0}
+        esi_counts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
         for patient in patients:
             complaint = next(c for c in CHIEF_COMPLAINTS if c["complaint"] == patient.chief_complaint)
             esi_counts[complaint["esi_bias"]] += 1
@@ -256,6 +256,8 @@ def generate_patient_batch(n_patients: int, seed: int = 42) -> list[Patient]:
             needs_resample.extend([2] * (2 - esi_counts[2]))
         if esi_counts[3] < 3:
             needs_resample.extend([3] * (3 - esi_counts[3]))
+        if esi_counts[4] + esi_counts[5] < 2:  # combined low acuity
+            needs_resample.extend([4, 5] * 2)
         
         # Replace last patients with required ESI levels
         for i, target_esi in enumerate(needs_resample):

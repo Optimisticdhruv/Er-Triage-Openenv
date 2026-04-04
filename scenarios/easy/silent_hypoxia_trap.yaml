@@ -1,0 +1,30 @@
+---
+id: easy_002
+name: "Silent hypoxia critical trap"
+patient:
+  patient_id: "EASY002"
+  name: "Suresh Kumar"
+  age: 55
+  sex: M
+  chief_complaint: "Mild cough, feels slightly unwell, no real pain"
+  complaint_category: RESPIRATORY
+  arrival_time: 0.0
+  arrival_mode: walk_in
+  vitals:
+    heart_rate: 92
+    bp_systolic: 118
+    bp_diastolic: 76
+    spo2: 84
+    respiratory_rate: 19
+    temperature: 37.2
+    pain_score: 2
+    gcs: 15
+  esi_ground_truth: 1
+  deterioration_risk: 0.0
+  status: waiting
+trap: true
+trap_explanation: >
+  Patient appears calm with near-normal complaint and most vitals.
+  SpO2 of 84% is immediately life-threatening. ESI-1 criterion: SpO2 less than or equal to 85%.
+  Most agents incorrectly assign P3 or P4.
+teaching_point: "SpO2 84% equals ESI-1 regardless of how calm the patient appears."

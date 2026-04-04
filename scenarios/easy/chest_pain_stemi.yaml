@@ -1,0 +1,26 @@
+---
+id: easy_001
+name: "Classic STEMI presentation"
+patient:
+  patient_id: "EASY001"
+  name: "Rajesh Mehta"
+  age: 67
+  sex: M
+  chief_complaint: "Crushing chest pain radiating to left arm, sweating profusely"
+  complaint_category: CARDIAC
+  arrival_time: 0.0
+  arrival_mode: ambulance
+  vitals:
+    heart_rate: 118
+    bp_systolic: 86
+    bp_diastolic: 56
+    spo2: 91
+    respiratory_rate: 22
+    temperature: 37.3
+    pain_score: 9
+    gcs: 15
+  esi_ground_truth: 1
+  deterioration_risk: 0.0
+  status: waiting
+trap: false
+teaching_point: "SBP 86 and SpO2 91 both trigger ESI-1. Classic STEMI in elderly male."

@@ -1,0 +1,4 @@
+# file: C:\Users\Dhruv\Downloads\er-triage-openenv\app\environment.py
+# hypothesis_version: 6.151.10
+
+[0.0, 0.1, 0.5, 0.6, 0.7, 5.0, 'ER Shift Management', 'Mass Casualty Event', '_alerts', 'acute', 'easy', 'episode_id', 'episode_summary', 'hard', 'medium', 'minor', 'none', 'resus', 'reward_breakdown', 'shift_time', 'step', 'task_easy', 'task_hard', 'task_id', 'task_medium', 'total', 'triaged', 'waiting']

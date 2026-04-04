@@ -1,0 +1,22 @@
+---
+id: hard_mci_001
+task_id: task_hard
+seed: 42
+event: "Multi-storey office building collapse, structural failure, 40 survivors"
+description: >
+  Mass casualty incident. 8 ESI-1 patients but only 5 resus beds.
+  Agent must prioritise correctly under resource scarcity.
+  Includes 4 trap patients.
+available_resources:
+  resus_beds: 5
+  acute_beds: 10
+  minor_beds: 20
+time_limit_minutes: 120
+n_patients: 40
+esi_distribution: {1: 8, 2: 12, 3: 12, 4: 6, 5: 2}
+trap_count: 4
+note: >
+  Full 40-patient list is generated deterministically by
+  generate_patient_batch(40, seed=42) with esi_ground_truth
+  computed by calculate_esi(). This YAML provides the scenario
+  metadata and resource constraints used by the environment.

@@ -1,10 +1,707 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ERTriageEnv Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-color: #475569;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --p1-red: #dc2626;
+            --p2-amber: #d97706;
+            --p3-blue-green: #0891b2;
+            --p4-blue: #2563eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* NAV BAR */
+        .nav {
+            background: var(--bg-secondary);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .nav-center {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .task-btn {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .task-btn:hover {
+            background: var(--border-color);
+        }
+
+        .task-btn.active {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .reset-btn {
+            background: var(--error);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+        }
+
+        .connection-status {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* METRICS ROW */
+        .metrics {
+            padding: 1.5rem 2rem;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .metric-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .metric-card.reward-high { border-color: var(--success); }
+        .metric-card.reward-medium { border-color: var(--warning); }
+        .metric-card.reward-low { border-color: var(--error); }
+
+        /* MAIN CONTENT */
+        .main {
+            display: grid;
+            grid-template-columns: 60% 40%;
+            gap: 1.5rem;
+            padding: 0 2rem 1.5rem;
+            min-height: 400px;
+        }
+
+        /* PATIENT QUEUE */
+        .patient-queue {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        .queue-header {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .patient-row {
+            display: grid;
+            grid-template-columns: auto 1fr 1fr auto;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+        }
+
+        .patient-row:last-child {
+            border-bottom: none;
+        }
+
+        .patient-row.alert {
+            border-left: 3px solid var(--error);
+            animation: flash 1s infinite;
+        }
+
+        @keyframes flash {
+            0%, 100% { border-left-color: var(--error); }
+            50% { border-left-color: var(--warning); }
+        }
+
+        .patient-row.waiting-long {
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .priority-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .priority-p1 { background: var(--p1-red); color: white; }
+        .priority-p2 { background: var(--p2-amber); color: white; }
+        .priority-p3 { background: var(--p3-blue-green); color: white; }
+        .priority-p4 { background: var(--p4-blue); color: white; }
+
+        .patient-info {
+            font-size: 0.875rem;
+        }
+
+        .vitals {
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+
+        .wait-time {
+            font-weight: 600;
+        }
+
+        /* RIGHT PANELS */
+        .right-panels {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        .panel-header {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .bed-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .bed {
+            aspect-ratio: 1;
+            border-radius: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .bed.resus { background: #991b1b; }
+        .bed.resus.occupied { background: var(--p1-red); }
+        .bed.acute { background: #92400e; }
+        .bed.acute.occupied { background: var(--p2-amber); }
+        .bed.minor { background: #14532d; }
+        .bed.minor.occupied { background: var(--success); }
+        .bed.empty { background: var(--bg-tertiary); }
+
+        .bed-id {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            font-size: 0.625rem;
+            opacity: 0.7;
+        }
+
+        /* REWARD BREAKDOWN */
+        .reward-item {
+            margin-bottom: 1rem;
+        }
+
+        .reward-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .reward-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .reward-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .reward-fill.priority { background: var(--success); }
+        .reward-fill.bed { background: var(--p3-blue-green); }
+        .reward-fill.escalation { background: var(--p4-blue); }
+        .reward-fill.penalty { background: var(--error); }
+
+        .total-reward {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+        }
+
+        /* ACTION LOG */
+        .action-log {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 0 2rem 2rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-header {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .log-entry {
+            font-family: monospace;
+            font-size: 0.875rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-time {
+            color: var(--text-secondary);
+        }
+
+        .log-reward-good { color: var(--success); }
+        .log-reward-medium { color: var(--warning); }
+        .log-reward-bad { color: var(--error); }
+        .log-reset { color: var(--p4-blue); }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .flash {
+            animation: flash 0.5s;
+        }
+    </style>
 </head>
 <body>
-    <h1>ER Triage Dashboard</h1>
-    <!-- Dashboard content placeholder -->
+    <!-- NAV BAR -->
+    <nav class="nav">
+        <div class="nav-left">
+            <span>ERTriageEnv</span>
+            <div class="live-dot"></div>
+            <span>v1.0.0</span>
+        </div>
+        <div class="nav-center">
+            <button class="task-btn" onclick="switchTask('task_easy')">Task 1 Easy</button>
+            <button class="task-btn" onclick="switchTask('task_medium')">Task 2 Medium</button>
+            <button class="task-btn" onclick="switchTask('task_hard')">Task 3 Hard</button>
+        </div>
+        <div class="nav-right">
+            <button class="reset-btn" onclick="switchTask(currentTask)">Reset Episode</button>
+            <span class="connection-status" id="connectionStatus">Connected</span>
+        </div>
+    </nav>
+
+    <!-- METRICS ROW -->
+    <div class="metrics">
+        <div class="metric-card" id="rewardCard">
+            <div class="metric-value" id="episodeReward">0.00</div>
+            <div class="metric-label">Episode Reward</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value" id="patientsCount">0 / 0</div>
+            <div class="metric-label">Patients</div>
+        </div>
+        <div class="metric-card" id="dangerousCard">
+            <div class="metric-value" id="dangerousErrors">0</div>
+            <div class="metric-label">Dangerous Errors</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value" id="simTime">00:00</div>
+            <div class="metric-label">Sim Time</div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main">
+        <!-- LEFT: PATIENT QUEUE -->
+        <div class="patient-queue">
+            <div class="queue-header">Patient Queue</div>
+            <div id="patientList">
+                <div style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                    Loading patients...
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: PANELS -->
+        <div class="right-panels">
+            <!-- BED STATUS -->
+            <div class="panel">
+                <div class="panel-header">Bed Status</div>
+                <div class="bed-grid" id="bedGrid">
+                    <!-- Beds will be populated by JS -->
+                </div>
+            </div>
+
+            <!-- REWARD BREAKDOWN -->
+            <div class="panel">
+                <div class="panel-header">Last Reward Breakdown</div>
+                <div id="rewardBreakdown">
+                    <div class="reward-item">
+                        <div class="reward-label">
+                            <span>Priority Accuracy</span>
+                            <span id="priorityValue">0.00</span>
+                        </div>
+                        <div class="reward-bar">
+                            <div class="reward-fill priority" id="priorityBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="reward-item">
+                        <div class="reward-label">
+                            <span>Bed Assignment</span>
+                            <span id="bedValue">0.00</span>
+                        </div>
+                        <div class="reward-bar">
+                            <div class="reward-fill bed" id="bedBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="reward-item">
+                        <div class="reward-label">
+                            <span>Escalation</span>
+                            <span id="escalationValue">0.00</span>
+                        </div>
+                        <div class="reward-bar">
+                            <div class="reward-fill escalation" id="escalationBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="reward-item">
+                        <div class="reward-label">
+                            <span>Penalty</span>
+                            <span id="penaltyValue">0.00</span>
+                        </div>
+                        <div class="reward-bar">
+                            <div class="reward-fill penalty" id="penaltyBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="total-reward" id="totalReward">0.00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTION LOG -->
+    <div class="action-log">
+        <div class="log-header">Action Log</div>
+        <div id="actionLog">
+            <div style="text-align: center; color: var(--text-secondary); padding: 1rem;">
+                Waiting for actions...
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        ESI grading: AHRQ Emergency Severity Index v4 (Public Domain)
+    </footer>
+
+    <script>
+        const BASE = '';
+        let currentTask = 'task_easy';
+        let actionLog = [];
+        let lastMetrics = {};
+
+        // STATE POLLING
+        async function pollState() {
+            try {
+                const res = await fetch(BASE + '/state');
+                if (!res.ok) { showConnecting(); return; }
+                const state = await res.json();
+                renderMetrics(state);
+                renderPatients(state.patients_waiting);
+                renderBeds(state.beds);
+                updateTaskButtons(state.task_id);
+                document.getElementById('connectionStatus').textContent = 'Connected';
+                document.getElementById('connectionStatus').style.color = 'var(--success)';
+            } catch(e) { 
+                showConnecting(); 
+            }
+        }
+
+        async function pollMetrics() {
+            try {
+                const res = await fetch(BASE + '/metrics');
+                const m = await res.json();
+                if (m.last_reward) {
+                    renderRewardBreakdown(m.last_reward);
+                }
+                const dangerous = m.dangerous_errors || 0;
+                const dangerousCard = document.getElementById('dangerousCard');
+                document.getElementById('dangerousErrors').textContent = dangerous;
+                
+                if (dangerous > 0) {
+                    dangerousCard.classList.add('reward-low');
+                    dangerousCard.classList.remove('reward-high');
+                } else {
+                    dangerousCard.classList.add('reward-high');
+                    dangerousCard.classList.remove('reward-low');
+                }
+            } catch(e) {
+                console.error('Metrics error:', e);
+            }
+        }
+
+        // RENDER FUNCTIONS
+        function renderMetrics(state) {
+            const reward = state.cumulative_reward || 0;
+            const rewardCard = document.getElementById('rewardCard');
+            document.getElementById('episodeReward').textContent = reward.toFixed(2);
+            
+            rewardCard.classList.remove('reward-high', 'reward-medium', 'reward-low');
+            if (reward > 0.6) {
+                rewardCard.classList.add('reward-high');
+            } else if (reward >= 0.3) {
+                rewardCard.classList.add('reward-medium');
+            } else {
+                rewardCard.classList.add('reward-low');
+            }
+
+            document.getElementById('patientsCount').textContent = 
+                `${state.patients_triaged} / ${state.total_patients}`;
+            document.getElementById('simTime').textContent = fmtTime(state.shift_time);
+        }
+
+        function renderPatients(patients) {
+            const container = document.getElementById('patientList');
+            if (!patients || patients.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 2rem;">No patients waiting</div>';
+                return;
+            }
+
+            container.innerHTML = patients.map(patient => {
+                const priorityClass = `priority-p${patient.priority}`;
+                const alerts = patient.active_alerts || [];
+                const alertClass = alerts.length > 0 ? 'alert' : '';
+                const waitClass = patient.waiting_minutes > 20 ? 'waiting-long' : '';
+                
+                return `
+                    <div class="patient-row ${alertClass} ${waitClass}">
+                        <div class="priority-badge ${priorityClass}">P${patient.priority}</div>
+                        <div class="patient-info">
+                            ${patient.age}${patient.sex} | ${patient.chief_complaint}
+                        </div>
+                        <div class="vitals">
+                            HR:${patient.vitals.heart_rate}/SpO2:${patient.vitals.spo2}/BP:${patient.vitals.bp_systolic}
+                        </div>
+                        <div class="wait-time">${patient.waiting_minutes.toFixed(1)}m</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderBeds(beds) {
+            const container = document.getElementById('bedGrid');
+            container.innerHTML = beds.map(bed => {
+                const bedClass = bed.bed_type;
+                const occupiedClass = bed.occupied ? 'occupied' : 'empty';
+                const content = bed.occupied ? 
+                    `<div class="bed-id">${bed.bed_id}</div>${bed.patient_id}` : 
+                    `<div class="bed-id">${bed.bed_id}</div>`;
+                
+                return `<div class="bed ${bedClass} ${occupiedClass}">${content}</div>`;
+            }).join('');
+        }
+
+        function renderRewardBreakdown(reward) {
+            if (!reward) return;
+            
+            document.getElementById('priorityValue').textContent = reward.priority_score?.toFixed(2) || '0.00';
+            document.getElementById('bedValue').textContent = reward.bed_score?.toFixed(2) || '0.00';
+            document.getElementById('escalationValue').textContent = reward.esc_score?.toFixed(2) || '0.00';
+            document.getElementById('penaltyValue').textContent = Math.abs(reward.penalty || 0).toFixed(2);
+            
+            document.getElementById('priorityBar').style.width = `${(reward.priority_score / 0.5) * 100}%`;
+            document.getElementById('bedBar').style.width = `${(reward.bed_score / 0.3) * 100}%`;
+            document.getElementById('escalationBar').style.width = `${(reward.esc_score / 0.2) * 100}%`;
+            document.getElementById('penaltyBar').style.width = `${Math.min(100, (Math.abs(reward.penalty || 0) / 0.5) * 100)}%`;
+            
+            const total = reward.total || 0;
+            const totalElement = document.getElementById('totalReward');
+            totalElement.textContent = total.toFixed(2);
+            
+            totalElement.classList.remove('log-reward-good', 'log-reward-medium', 'log-reward-bad');
+            if (total > 0.5) {
+                totalElement.classList.add('log-reward-good');
+            } else if (total >= 0.2) {
+                totalElement.classList.add('log-reward-medium');
+            } else {
+                totalElement.classList.add('log-reward-bad');
+            }
+        }
+
+        function updateTaskButtons(taskId) {
+            currentTask = taskId;
+            document.querySelectorAll('.task-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            const activeBtn = Array.from(document.querySelectorAll('.task-btn'))
+                .find(btn => btn.textContent.toLowerCase().includes(taskId.replace('task_', '')));
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+            }
+        }
+
+        function addToActionLog(entry) {
+            actionLog.unshift(entry);
+            if (actionLog.length > 8) {
+                actionLog = actionLog.slice(0, 8);
+            }
+            
+            const container = document.getElementById('actionLog');
+            container.innerHTML = actionLog.map(log => {
+                const time = fmtTime(log.timestamp || 0);
+                const rewardClass = log.reward > 0.5 ? 'log-reward-good' : 
+                                   log.reward >= 0.2 ? 'log-reward-medium' : 'log-reward-bad';
+                const resetClass = log.type === 'reset' ? 'log-reset' : '';
+                
+                return `
+                    <div class="log-entry">
+                        <span class="log-time">[${time}]</span>
+                        <span class="${resetClass} ${rewardClass}">
+                            ${log.message}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // UTILITY FUNCTIONS
+        async function switchTask(taskId) {
+            try {
+                await fetch(BASE + '/reset?task_id=' + taskId + '&seed=42');
+                actionLog = [];
+                addToActionLog({
+                    type: 'reset',
+                    message: `RESET to ${taskId}`,
+                    timestamp: Date.now() / 60000
+                });
+                await pollState();
+            } catch(e) {
+                showConnecting();
+            }
+        }
+
+        function showConnecting() {
+            document.getElementById('connectionStatus').textContent = 'Connecting to environment...';
+            document.getElementById('connectionStatus').style.color = 'var(--warning)';
+        }
+
+        function fmtTime(mins) {
+            const m = Math.floor(mins);
+            const s = Math.round((mins - m) * 60);
+            return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        }
+
+        function flashElement(elementId) {
+            const element = document.getElementById(elementId);
+            element.classList.add('flash');
+            setTimeout(() => element.classList.remove('flash'), 500);
+        }
+
+        // INITIALIZATION
+        setInterval(pollState, 2000);
+        setInterval(pollMetrics, 3000);
+        
+        // Initial load
+        pollState();
+        
+        // Add initial log entry
+        addToActionLog({
+            type: 'reset',
+            message: 'Dashboard initialized',
+            timestamp: Date.now() / 60000
+        });
+    </script>
 </body>
 </html>

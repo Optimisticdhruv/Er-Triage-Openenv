@@ -1,0 +1,129 @@
+---
+id: medium_shift_001
+task_id: task_medium
+seed: 42
+n_patients: 15
+description: >
+  15-patient ER shift. 2 ESI-1, 4 ESI-2, 5 ESI-3, 3 ESI-4, 1 ESI-5.
+  Includes 2 trap patients. Patients 2 and 9 are traps.
+patients:
+  - patient_id: P001
+    age: 72
+    sex: M
+    chief_complaint: Crushing chest pain, pale, sweaty
+    arrival_mode: ambulance
+    vitals: {heart_rate: 124, bp_systolic: 84, bp_diastolic: 58, spo2: 90, respiratory_rate: 24, temperature: 37.1, pain_score: 9, gcs: 15}
+    esi_ground_truth: 1
+    trap: false
+  - patient_id: P002
+    age: 44
+    sex: F
+    chief_complaint: Mild dizziness, feels funny — GCS actually 11
+    arrival_mode: walk_in
+    vitals: {heart_rate: 98, bp_systolic: 108, bp_diastolic: 70, spo2: 96, respiratory_rate: 16, temperature: 37.0, pain_score: 3, gcs: 11}
+    esi_ground_truth: 2
+    trap: true
+  - patient_id: P003
+    age: 31
+    sex: M
+    chief_complaint: Severe asthma attack, cannot finish sentences
+    arrival_mode: ambulance
+    vitals: {heart_rate: 136, bp_systolic: 102, bp_diastolic: 68, spo2: 88, respiratory_rate: 32, temperature: 37.4, pain_score: 7, gcs: 15}
+    esi_ground_truth: 1
+    trap: false
+  - patient_id: P004
+    age: 58
+    sex: F
+    chief_complaint: Fever with rigors, confusion, sepsis screen positive
+    arrival_mode: ambulance
+    vitals: {heart_rate: 122, bp_systolic: 96, bp_diastolic: 62, spo2: 94, respiratory_rate: 26, temperature: 39.8, pain_score: 6, gcs: 14}
+    esi_ground_truth: 2
+    trap: false
+  - patient_id: P005
+    age: 19
+    sex: M
+    chief_complaint: Worst headache of life sudden onset
+    arrival_mode: walk_in
+    vitals: {heart_rate: 108, bp_systolic: 148, bp_diastolic: 94, spo2: 98, respiratory_rate: 18, temperature: 37.2, pain_score: 10, gcs: 15}
+    esi_ground_truth: 2
+    trap: false
+  - patient_id: P006
+    age: 63
+    sex: M
+    chief_complaint: Shortness of breath history of heart failure
+    arrival_mode: ambulance
+    vitals: {heart_rate: 112, bp_systolic: 104, bp_diastolic: 66, spo2: 91, respiratory_rate: 28, temperature: 37.0, pain_score: 5, gcs: 15}
+    esi_ground_truth: 2
+    trap: false
+  - patient_id: P007
+    age: 38
+    sex: F
+    chief_complaint: Abdominal pain RLQ nauseated appendicitis suspected
+    arrival_mode: walk_in
+    vitals: {heart_rate: 104, bp_systolic: 118, bp_diastolic: 76, spo2: 97, respiratory_rate: 18, temperature: 38.6, pain_score: 7, gcs: 15}
+    esi_ground_truth: 3
+    trap: false
+  - patient_id: P008
+    age: 55
+    sex: M
+    chief_complaint: Back pain chronic worse today
+    arrival_mode: walk_in
+    vitals: {heart_rate: 86, bp_systolic: 132, bp_diastolic: 84, spo2: 97, respiratory_rate: 16, temperature: 36.8, pain_score: 6, gcs: 15}
+    esi_ground_truth: 4
+    trap: false
+  - patient_id: P009
+    age: 76
+    sex: F
+    chief_complaint: Minor fall bruised knee on warfarin
+    arrival_mode: walk_in
+    vitals: {heart_rate: 88, bp_systolic: 124, bp_diastolic: 78, spo2: 98, respiratory_rate: 15, temperature: 37.0, pain_score: 4, gcs: 15}
+    esi_ground_truth: 3
+    trap: true
+  - patient_id: P010
+    age: 22
+    sex: F
+    chief_complaint: Laceration forearm from kitchen knife controlled
+    arrival_mode: walk_in
+    vitals: {heart_rate: 88, bp_systolic: 126, bp_diastolic: 80, spo2: 99, respiratory_rate: 14, temperature: 36.9, pain_score: 5, gcs: 15}
+    esi_ground_truth: 3
+    trap: false
+  - patient_id: P011
+    age: 45
+    sex: M
+    chief_complaint: Toothache unable to sleep paracetamol not working
+    arrival_mode: walk_in
+    vitals: {heart_rate: 80, bp_systolic: 122, bp_diastolic: 78, spo2: 99, respiratory_rate: 14, temperature: 36.8, pain_score: 5, gcs: 15}
+    esi_ground_truth: 5
+    trap: false
+  - patient_id: P012
+    age: 33
+    sex: M
+    chief_complaint: Panic attack heart racing breathing fast
+    arrival_mode: walk_in
+    vitals: {heart_rate: 106, bp_systolic: 138, bp_diastolic: 88, spo2: 98, respiratory_rate: 22, temperature: 37.0, pain_score: 5, gcs: 15}
+    esi_ground_truth: 3
+    trap: false
+  - patient_id: P013
+    age: 28
+    sex: F
+    chief_complaint: Sore throat mild fever cannot swallow
+    arrival_mode: walk_in
+    vitals: {heart_rate: 84, bp_systolic: 116, bp_diastolic: 74, spo2: 99, respiratory_rate: 16, temperature: 38.2, pain_score: 6, gcs: 15}
+    esi_ground_truth: 3
+    trap: false
+  - patient_id: P014
+    age: 42
+    sex: M
+    chief_complaint: Medication refill no acute issue
+    arrival_mode: walk_in
+    vitals: {heart_rate: 78, bp_systolic: 114, bp_diastolic: 72, spo2: 99, respiratory_rate: 14, temperature: 37.1, pain_score: 4, gcs: 15}
+    esi_ground_truth: 5
+    trap: false
+  - patient_id: P015
+    age: 8
+    sex: F
+    chief_complaint: Viral URTI runny nose and cough
+    arrival_mode: walk_in
+    vitals: {heart_rate: 84, bp_systolic: 116, bp_diastolic: 74, spo2: 99, respiratory_rate: 16, temperature: 38.2, pain_score: 6, gcs: 15}
+    esi_ground_truth: 3
+    trap: false

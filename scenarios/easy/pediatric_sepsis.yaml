@@ -1,0 +1,28 @@
+---
+id: easy_004
+name: "Pediatric sepsis age-adjusted vitals"
+patient:
+  patient_id: "EASY004"
+  name: "Aryan Patel"
+  age: 4
+  sex: M
+  chief_complaint: "High fever, not responding normally to parents, lethargic"
+  complaint_category: INFECTION
+  arrival_time: 0.0
+  arrival_mode: ambulance
+  vitals:
+    heart_rate: 158
+    bp_systolic: 84
+    bp_diastolic: 52
+    spo2: 95
+    respiratory_rate: 34
+    temperature: 40.2
+    pain_score: 8
+    gcs: 12
+  esi_ground_truth: 1
+  deterioration_risk: 0.0
+  status: waiting
+trap: false
+teaching_point: >
+  Pediatric sepsis. GCS 12 alone triggers ESI-1. HR 158 and SBP 84 are
+  critical in a 4-year-old. Age-adjusted thresholds apply.

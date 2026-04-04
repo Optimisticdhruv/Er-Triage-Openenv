@@ -1,0 +1,26 @@
+---
+id: easy_003
+name: "Clear minor injury"
+patient:
+  patient_id: "EASY003"
+  name: "Priya Sharma"
+  age: 24
+  sex: F
+  chief_complaint: "Twisted ankle while running, mild swelling, walks with a limp"
+  complaint_category: MINOR
+  arrival_time: 0.0
+  arrival_mode: walk_in
+  vitals:
+    heart_rate: 82
+    bp_systolic: 118
+    bp_diastolic: 74
+    spo2: 99
+    respiratory_rate: 14
+    temperature: 36.9
+    pain_score: 4
+    gcs: 15
+  esi_ground_truth: 4
+  deterioration_risk: 0.0
+  status: waiting
+trap: false
+teaching_point: "All normal vitals, minor mechanism, low pain equals ESI-4."
