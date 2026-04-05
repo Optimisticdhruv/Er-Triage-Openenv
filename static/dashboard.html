@@ -1689,7 +1689,7 @@
                 
                 // Remove patient from registered list
                 appState.registeredPatients = appState.registeredPatients.filter(p => p.patient_id !== action.patient_id);
-                delete patientsMap[action.patient_id];
+                delete appState.patientsMap[action.patient_id];
                 
                 // Update UI
                 renderPatientQueue([]);
