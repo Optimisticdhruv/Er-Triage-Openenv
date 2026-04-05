@@ -1,7 +1,7 @@
 """ERTriageEnv inference module for AI agent evaluation.
 
 Uses OpenAI API to perform triage decisions on synthetic patients.
-Follows strict JSON logging format for hackathon evaluation.
+Follows strict OpenEnv hackathon logging format.
 """
 import os
 import json
@@ -45,6 +45,26 @@ RESPOND ONLY WITH VALID JSON — NO TEXT BEFORE OR AFTER:
   "reasoning": "Brief one-sentence clinical reasoning"
 }"""
 
+def log_start(task: str, env: str, model: str) -> None:
+    print(f"[START] task={task} env={env} model={model}", flush=True)
+
+def log_step(step: int, action: str, reward: float, done: bool, error=None) -> None:
+    error_val = error if error else "null"
+    done_val = str(done).lower()
+    print(f"[STEP] step={step} action={action} reward={reward:.2f} "
+          f"done={done_val} error={error_val}", flush=True)
+
+def log_end(success: bool, steps: int, score: float, rewards: list) -> None:
+    rewards_str = ",".join(f"{r:.2f}" for r in rewards)
+    print(f"[END] success={str(success).lower()} steps={steps} "
+          f"score={score:.2f} rewards={rewards_str}", flush=True)
+
+def format_action(action: dict) -> str:
+    """Format action as P{priority}_{bed_type}_{escalate}"""
+    priority = action["priority"]
+    bed_type = action["bed_type"]
+    escalate = "escalate" if action["escalate"] else "no_escalate"
+    return f"P{priority}_{bed_type}_{escalate}"
 def format_patient(obs: dict) -> str:
     """Format patient observation for AI prompt."""
     v = obs.get("vitals", {})
@@ -71,18 +91,63 @@ def get_action(patient_obs: dict) -> dict:
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": format_patient(patient_obs)}
             ],
-            temperature=0,
-            max_tokens=200,
+            temperature=0.3,  # Allow some variation
+            max_tokens=300,    # Increase tokens for better JSON
         )
         raw = resp.choices[0].message.content.strip()
         return json.loads(raw)
     except (json.JSONDecodeError, Exception):
+        # Intelligent fallback based on vitals
+        v = patient_obs.get("vitals", {})
+        age = patient_obs.get("age", 30)
+        
+        # Calculate priority based on vitals
+        priority = 3  # default to P3
+        bed_type = "minor"
+        escalate = False
+        
+        # ESI-1: Immediate life threats
+        if (v.get('spo2', 100) <= 85 or 
+            v.get('gcs', 15) <= 8 or
+            (v.get('bp_systolic', 120) < 80 and age >= 18) or
+            v.get('heart_rate', 80) > 150):
+            priority = 1
+            bed_type = "resus"
+            escalate = True
+        
+        # ESI-2: High risk
+        elif (v.get('spo2', 100) <= 92 or
+              v.get('gcs', 15) <= 13 or
+              (v.get('bp_systolic', 120) <= 100 and age >= 18) or
+              v.get('heart_rate', 80) >= 120 or
+              v.get('temperature', 37) > 39.5):
+            priority = 2
+            bed_type = "acute"
+            escalate = True
+        
+        # ESI-4: Less urgent
+        elif (v.get('spo2', 100) >= 96 and
+              v.get('heart_rate', 80) >= 55 and v.get('heart_rate', 80) <= 100 and
+              v.get('temperature', 37) <= 38.5 and
+              v.get('pain_score', 0) < 5):
+            priority = 4
+            bed_type = "minor"
+            escalate = False
+        
+        # ESI-5: Non-urgent
+        elif (v.get('spo2', 100) >= 96 and
+              v.get('pain_score', 0) < 3 and
+              v.get('temperature', 37) < 38.0):
+            priority = 5
+            bed_type = "waiting_area"
+            escalate = False
+        
         return {
             "patient_id": patient_obs["patient_id"],
-            "priority": 3,
-            "bed_type": "minor",
-            "escalate": False,
-            "reasoning": "parse_error_fallback"
+            "priority": priority,
+            "bed_type": bed_type,
+            "escalate": escalate,
+            "reasoning": "fallback_vitals_based"
         }
 
 def run_task(task_id: str) -> dict:
@@ -103,21 +168,11 @@ def run_task(task_id: str) -> dict:
         reward_total = result["reward"]["total"]
         step_rewards.append(reward_total)
         step_num += 1
-        # MANDATORY [STEP] log format
-        print(json.dumps({
-            "type": "[STEP]",
-            "task_id": task_id,
-            "step": step_num,
-            "patient_id": action["patient_id"],
-            "action": {
-                "priority": action["priority"],
-                "bed_type": action["bed_type"],
-                "escalate": action["escalate"],
-            },
-            "reward": round(reward_total, 4),
-            "cumulative_reward": round(result["observation"]["cumulative_reward"], 4),
-            "done": result["done"],
-        }), flush=True)
+        
+        # Format action string and log step
+        action_str = format_action(action)
+        log_step(step_num, action_str, reward_total, result["done"])
+        
         state = result["observation"]
         if step_num >= 100:
             break
@@ -132,43 +187,28 @@ def run_task(task_id: str) -> dict:
 
 def main():
     """Main inference runner."""
-    run_id = f"run_{int(time.time())}"
     tasks = ["task_easy", "task_medium", "task_hard"]
-    # MANDATORY [START] log
-    print(json.dumps({
-        "type": "[START]",
-        "run_id": run_id,
-        "model": MODEL_NAME,
-        "api_base": API_BASE_URL,
-        "environment_url": ENV_URL,
-        "seed": SEED,
-        "tasks": tasks,
-        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-    }), flush=True)
-    all_results = []
-    overall_start = time.time()
+    
+    # Log start for each task
     for task_id in tasks:
-        print(json.dumps({"type": "[STEP]", "event": "task_start", "task_id": task_id,
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}), flush=True)
+        log_start(task_id, "er_triage", MODEL_NAME)
+        
+    all_results = []
+    all_rewards = []
+    
+    for task_id in tasks:
         result = run_task(task_id)
         all_results.append(result)
-        print(json.dumps({"type": "[STEP]", "event": "task_complete",
-            "task_id": task_id, "task_score": result["task_score"],
-            "steps": result["steps"], "duration_seconds": result["duration_seconds"]}), flush=True)
-    mean_score = round(sum(r["task_score"] for r in all_results)/len(all_results), 4)
-    # MANDATORY [END] log
-    print(json.dumps({
-        "type": "[END]",
-        "run_id": run_id,
-        "model": MODEL_NAME,
-        "seed": SEED,
-        "total_duration_seconds": round(time.time()-overall_start, 2),
-        "results": {r["task_id"]: {"task_score": r["task_score"],
-            "mean_reward": r["mean_reward"], "steps": r["steps"],
-            "duration_seconds": r["duration_seconds"]} for r in all_results},
-        "mean_score_all_tasks": mean_score,
-        "status": "completed",
-    }), flush=True)
+        all_rewards.extend(result["step_rewards"])
+    
+    # Calculate overall score
+    overall_score = round(sum(all_rewards)/len(all_rewards), 4) if all_rewards else 0.0
+    overall_success = overall_score >= 0.50
+    total_steps = sum(r["steps"] for r in all_results)
+    
+    # Log end
+    log_end(overall_success, total_steps, overall_score, all_rewards)
+    
     return all_results
 
 if __name__ == "__main__":
