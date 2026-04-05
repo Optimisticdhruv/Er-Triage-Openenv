@@ -77,3 +77,49 @@ def test_cumulative_reward_accumulates():
         total += result.reward.total
         state = result.observation
     assert abs(state.cumulative_reward - round(total, 4)) < 0.01
+
+def test_full_episode_task_easy():
+    env = EREnvironment()
+    state = env.reset("task_easy", seed=42)
+    assert state.total_patients == 1
+    p = state.patients_waiting[0]
+    result = env.step(TriageAction(patient_id=p.patient_id,
+        priority=1, bed_type="resus", escalate=True))
+    assert result.done == True
+    assert -1.0 <= result.reward.total <= 1.0
+    assert result.observation.patients_triaged == 1
+    assert isinstance(result.info.get("episode_summary"), dict)
+    assert result.reward.explanation != ""
+
+def test_full_episode_task_medium_partial():
+    env = EREnvironment()
+    state = env.reset("task_medium", seed=42)
+    assert state.total_patients == 15
+    for step in range(5):
+        if not state.patients_waiting or state.episode_done: break
+        p = state.patients_waiting[0]
+        result = env.step(TriageAction(patient_id=p.patient_id,
+            priority=2, bed_type="acute", escalate=True))
+        state = result.observation
+        assert -1.0 <= result.reward.total <= 1.0
+    assert state.patients_triaged == 5
+
+def test_info_dict_has_required_fields():
+    env = EREnvironment()
+    state = env.reset("task_easy", seed=42)
+    result = env.step(TriageAction(patient_id=state.patients_waiting[0].patient_id,
+        priority=2, bed_type="acute", escalate=True))
+    for field in ["step", "triaged", "total", "shift_time", "episode_id"]:
+        assert field in result.info, f"Missing field in info: {field}"
+
+def test_no_esi_ground_truth_in_observation():
+    env = EREnvironment()
+    state = env.reset("task_medium", seed=42)
+    for obs in state.patients_waiting:
+        assert not hasattr(obs, "esi_ground_truth"), "esi_ground_truth leaked to agent!"
+        assert not hasattr(obs, "deterioration_risk"), "deterioration_risk leaked!"
+
+def test_inference_py_at_root():
+    from pathlib import Path
+    assert Path("inference.py").exists(), (
+        "CRITICAL: inference.py not in root — DISQUALIFICATION CONDITION")

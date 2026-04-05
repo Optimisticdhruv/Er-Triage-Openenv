@@ -16,6 +16,8 @@ short_description: Hospital ER Triage - OpenEnv AI Agent Training Environment
 
 ---
 
+![CI](https://github.com/optimisticdhruv/er-triage-openenv/actions/workflows/ci.yml/badge.svg)
+
 # ERTriageEnv Hospital
 Hospital Emergency Room Triage — OpenEnv AI Agent Training Environment
 
@@ -127,7 +129,7 @@ uvicorn app.main:app --reload --port 7860
 | Model | Task 1 Easy | Task 2 Medium | Task 3 Hard | Mean Score |
 |-------|-------------|---------------|-------------|------------|
 | GPT-4o | TBD | TBD | TBD | TBD |
-| GPT-4o-mini | TBD | TBD | TBD | TBD |
+| GPT-4o-mini | 0.0 | 0.2267 | 0.195 | 0.1406 |
 | Llama 3.1 70B | TBD | TBD | TBD | TBD |
 | Mistral 7B | TBD | TBD | TBD | TBD |
 

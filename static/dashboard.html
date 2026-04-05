@@ -3,704 +3,2700 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERTriageEnv Dashboard</title>
+    <title>ERTriageEnv - Emergency Room Triage Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --bg-primary: #0f172a;
             --bg-secondary: #1e293b;
             --bg-tertiary: #334155;
+            --bg-card: #1e293b;
+            --border: #334155;
+            --border-light: #475569;
             --text-primary: #f1f5f9;
-            --text-secondary: #cbd5e1;
-            --border-color: #475569;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --error: #ef4444;
-            --p1-red: #dc2626;
-            --p2-amber: #d97706;
-            --p3-blue-green: #0891b2;
-            --p4-blue: #2563eb;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            
+            --p1: #ef4444;
+            --p1-bg: #450a0a;
+            --p1-border: #991b1b;
+            --p2: #f97316;
+            --p2-bg: #431407;
+            --p2-border: #9a3412;
+            --p3: #eab308;
+            --p3-bg: #422006;
+            --p3-border: #854d0e;
+            --p4: #22c55e;
+            --p4-bg: #052e16;
+            --p4-border: #166534;
+            
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --gold: #f59e0b;
+            
+            --resus-color: #ef4444;
+            --acute-color: #f97316;
+            --minor-color: #22c55e;
+            
+            --font-mono: 'Courier New', monospace;
+            --radius: 8px;
+            --radius-lg: 12px;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
+        * { box-sizing: border-box; }
+        
+        body { 
+            margin: 0; 
+            padding: 0; 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
-            line-height: 1.6;
+            overflow-x: hidden;
         }
 
-        /* NAV BAR */
-        .nav {
-            background: var(--bg-secondary);
-            padding: 1rem 2rem;
-            border-bottom: 1px solid var(--border-color);
+        .hidden { display: none !important; }
+        
+        .screen { min-height: 100vh; }
+        
+        /* Welcome Screen */
+        .welcome-hero {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 2rem;
         }
-
-        .nav-left {
+        
+        .hospital-cross {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            animation: pulse 2s infinite;
+        }
+        
+        .hospital-cross::before,
+        .hospital-cross::after {
+            content: '';
+            position: absolute;
+            background: var(--danger);
+        }
+        
+        .hospital-cross::before {
+            width: 100%;
+            height: 20px;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+        }
+        
+        .hospital-cross::after {
+            width: 20px;
+            height: 100%;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        
+        .mode-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin: 1rem;
+            max-width: 300px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .mode-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--info);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+        }
+        
+        .difficulty-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .difficulty-btn:hover,
+        .difficulty-btn.active {
+            background: var(--info);
+            border-color: var(--info);
+        }
+        
+        /* Dashboard Layout */
+        .dashboard {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        .top-nav {
+            height: 60px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1rem;
+            flex-shrink: 0;
+        }
+        
+        .nav-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .task-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .task-tab {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .task-tab.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--info);
+        }
+        
+        .connection-status {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            font-weight: 600;
+            font-size: 0.875rem;
         }
-
-        .live-dot {
+        
+        .status-dot {
             width: 8px;
             height: 8px;
-            background: var(--success);
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .nav-center {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .task-btn {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .task-btn:hover {
-            background: var(--border-color);
-        }
-
-        .task-btn.active {
-            background: var(--success);
-            border-color: var(--success);
-        }
-
-        .nav-right {
+        
+        .status-dot.connected { background: var(--success); }
+        .status-dot.disconnected { background: var(--danger); }
+        
+        .metrics-row {
+            height: 80px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
+            padding: 0 1rem;
             gap: 1rem;
+            flex-shrink: 0;
+            overflow-x: auto;
         }
-
-        .reset-btn {
-            background: var(--error);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            cursor: pointer;
-        }
-
-        .connection-status {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        /* METRICS ROW */
-        .metrics {
-            padding: 1.5rem 2rem;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-        }
-
+        
         .metric-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 0.5rem;
-            padding: 1rem;
-            text-align: center;
-            transition: all 0.3s;
-        }
-
-        .metric-value {
-            font-size: 2rem;
-            font-weight: 700;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .metric-label {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            margin-top: 0.25rem;
-        }
-
-        .metric-card.reward-high { border-color: var(--success); }
-        .metric-card.reward-medium { border-color: var(--warning); }
-        .metric-card.reward-low { border-color: var(--error); }
-
-        /* MAIN CONTENT */
-        .main {
-            display: grid;
-            grid-template-columns: 60% 40%;
-            gap: 1.5rem;
-            padding: 0 2rem 1.5rem;
-            min-height: 400px;
-        }
-
-        /* PATIENT QUEUE */
-        .patient-queue {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 0.5rem;
-            padding: 1rem;
-        }
-
-        .queue-header {
-            font-weight: 600;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .patient-row {
-            display: grid;
-            grid-template-columns: auto 1fr 1fr auto;
-            gap: 0.75rem;
-            padding: 0.75rem;
-            border-bottom: 1px solid var(--border-color);
-            align-items: center;
-        }
-
-        .patient-row:last-child {
-            border-bottom: none;
-        }
-
-        .patient-row.alert {
-            border-left: 3px solid var(--error);
-            animation: flash 1s infinite;
-        }
-
-        @keyframes flash {
-            0%, 100% { border-left-color: var(--error); }
-            50% { border-left-color: var(--warning); }
-        }
-
-        .patient-row.waiting-long {
-            background: rgba(245, 158, 11, 0.1);
-        }
-
-        .priority-badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .priority-p1 { background: var(--p1-red); color: white; }
-        .priority-p2 { background: var(--p2-amber); color: white; }
-        .priority-p3 { background: var(--p3-blue-green); color: white; }
-        .priority-p4 { background: var(--p4-blue); color: white; }
-
-        .patient-info {
-            font-size: 0.875rem;
-        }
-
-        .vitals {
-            font-family: monospace;
-            font-size: 0.875rem;
-        }
-
-        .wait-time {
-            font-weight: 600;
-        }
-
-        /* RIGHT PANELS */
-        .right-panels {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.75rem 1rem;
+            min-width: 150px;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.25rem;
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            font-family: var(--font-mono);
+        }
+        
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            transition: width 0.3s ease;
+            min-width: 0;
+            border-radius: 3px;
         }
 
-        .panel {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 0.5rem;
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .column {
+            overflow-y: auto;
             padding: 1rem;
         }
-
-        .panel-header {
-            font-weight: 600;
+        
+        .column-left { width: 45%; }
+        .column-middle { width: 25%; }
+        .column-right { width: 30%; }
+        
+        .patient-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem;
             margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
-
+        
+        .patient-card:hover {
+            border-color: var(--border-light);
+        }
+        
+        .patient-card.selected {
+            border-color: var(--info);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        
+        .patient-card.processing {
+            border-color: var(--warning);
+            animation: pulse 1s infinite;
+        }
+        
+        .vital-critical { color: var(--danger); font-weight: bold; }
+        .vital-warning { color: var(--p2); }
+        .vital-caution { color: var(--p3); }
+        .vital-normal { color: var(--success); }
+        
         .bed-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 0.5rem;
+            margin-bottom: 1rem;
         }
-
-        .bed {
-            aspect-ratio: 1;
-            border-radius: 0.25rem;
+        
+        .bed-tile {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+        
+        .bed-tile.occupied {
+            background: var(--resus-color);
+            border-color: var(--resus-color);
+        }
+        
+        .bed-tile.occupied.acute {
+            background: var(--acute-color);
+            border-color: var(--acute-color);
+        }
+        
+        .bed-tile.occupied.minor {
+            background: var(--minor-color);
+            border-color: var(--minor-color);
+        }
+        
+        /* Triage Panel */
+        .triage-panel {
+            position: fixed;
+            top: 0;
+            right: -420px;
+            width: 420px;
+            height: 100vh;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .triage-panel.open {
+            right: 0;
+        }
+        
+        .priority-btn {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            color: var(--text-primary);
+            padding: 1rem;
+            margin: 0.25rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+        }
+        
+        .priority-btn.p1 { border-color: var(--p1); }
+        .priority-btn.p2 { border-color: var(--p2); }
+        .priority-btn.p3 { border-color: var(--p3); }
+        .priority-btn.p4 { border-color: var(--p4); }
+        
+        .priority-btn.selected.p1 { background: var(--p1-bg); border-color: var(--p1); }
+        .priority-btn.selected.p2 { background: var(--p2-bg); border-color: var(--p2); }
+        .priority-btn.selected.p3 { background: var(--p3-bg); border-color: var(--p3); }
+        .priority-btn.selected.p4 { background: var(--p4-bg); border-color: var(--p4); }
+        
+        .bed-btn {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.75rem;
+            margin: 0.25rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+        }
+        
+        .bed-btn.resus { border-color: var(--resus-color); }
+        .bed-btn.acute { border-color: var(--acute-color); }
+        .bed-btn.minor { border-color: var(--minor-color); }
+        
+        .bed-btn.selected.resus { background: var(--resus-color); }
+        .bed-btn.selected.acute { background: var(--acute-color); }
+        .bed-btn.selected.minor { background: var(--minor-color); }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.75rem;
-            font-weight: 600;
-            position: relative;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
         }
-
-        .bed.resus { background: #991b1b; }
-        .bed.resus.occupied { background: var(--p1-red); }
-        .bed.acute { background: #92400e; }
-        .bed.acute.occupied { background: var(--p2-amber); }
-        .bed.minor { background: #14532d; }
-        .bed.minor.occupied { background: var(--success); }
-        .bed.empty { background: var(--bg-tertiary); }
-
-        .bed-id {
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            font-size: 0.625rem;
-            opacity: 0.7;
+        
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
         }
-
-        /* REWARD BREAKDOWN */
-        .reward-item {
-            margin-bottom: 1rem;
+        
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
         }
-
-        .reward-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.875rem;
+        
+        .modal-overlay.open .modal-content {
+            transform: scale(1);
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-secondary);
+            color: white;
+            padding: 1rem;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            max-width: 300px;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.success { background: var(--success); }
+        .toast.warning { background: var(--warning); }
+        .toast.error { background: var(--danger); }
+        .toast.danger { background: var(--danger); }
+        
+        .toast-title {
+            font-weight: bold;
+            font-size: 0.9rem;
             margin-bottom: 0.25rem;
         }
-
-        .reward-bar {
-            height: 8px;
-            background: var(--bg-tertiary);
-            border-radius: 4px;
-            overflow: hidden;
+        
+        .toast-message {
+            font-size: 0.8rem;
+            opacity: 0.9;
         }
-
-        .reward-fill {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.3s;
+        
+        /* Animations */
+        @keyframes flash-green {
+            0%, 100% { border-color: var(--border); }
+            50% { border-color: var(--success); box-shadow: 0 0 10px rgba(34, 197, 94, 0.5); }
         }
-
-        .reward-fill.priority { background: var(--success); }
-        .reward-fill.bed { background: var(--p3-blue-green); }
-        .reward-fill.escalation { background: var(--p4-blue); }
-        .reward-fill.penalty { background: var(--error); }
-
-        .total-reward {
-            font-size: 1.5rem;
-            font-weight: 700;
-            text-align: center;
-            margin-top: 1rem;
-            padding: 0.5rem;
-            border-radius: 0.375rem;
+        
+        @keyframes flash-red {
+            0%, 100% { border-color: var(--border); }
+            50% { border-color: var(--danger); box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
         }
-
-        /* ACTION LOG */
-        .action-log {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin: 0 2rem 2rem;
-            max-height: 300px;
-            overflow-y: auto;
+        
+        @keyframes fade-out {
+            0% { opacity: 1; transform: translateX(0); }
+            100% { opacity: 0; transform: translateX(-100%); }
         }
-
-        .log-header {
-            font-weight: 600;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .log-entry {
-            font-family: monospace;
-            font-size: 0.875rem;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .log-entry:last-child {
-            border-bottom: none;
-        }
-
-        .log-time {
-            color: var(--text-secondary);
-        }
-
-        .log-reward-good { color: var(--success); }
-        .log-reward-medium { color: var(--warning); }
-        .log-reward-bad { color: var(--error); }
-        .log-reset { color: var(--p4-blue); }
-
-        /* FOOTER */
-        .footer {
-            text-align: center;
-            padding: 1rem;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .flash {
-            animation: flash 0.5s;
+        
+        .flash-green { animation: flash-green 0.6s ease; }
+        .flash-red { animation: flash-red 0.6s ease; }
+        .fade-out { animation: fade-out 0.3s ease forwards; }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-content { flex-direction: column; }
+            .column { width: 100%; }
         }
     </style>
 </head>
 <body>
-    <!-- NAV BAR -->
-    <nav class="nav">
-        <div class="nav-left">
-            <span>ERTriageEnv</span>
-            <div class="live-dot"></div>
-            <span>v1.0.0</span>
+    <!-- Welcome Screen -->
+    <div id="welcomeScreen" class="screen welcome-hero">
+        <div class="text-gray-400 mb-8">🏥 ERTriageEnv | OpenEnv AI Training Environment</div>
+        
+        <div class="hospital-cross mb-8"></div>
+        
+        <h1 class="text-4xl font-bold mb-4">Emergency Room Triage Simulator</h1>
+        <p class="text-xl text-gray-400 mb-12">AI-powered triage training environment built on AHRQ ESI v4</p>
+        
+        <div class="flex flex-wrap justify-center gap-4 mb-12">
+            <!-- AI Agent Mode Card -->
+            <div class="mode-card" onclick="startMode('ai')">
+                <div class="text-3xl mb-4">🤖</div>
+                <h3 class="text-xl font-bold mb-2">AI AGENT MODE</h3>
+                <p class="text-gray-400 mb-4">Watch AI model triage patients using ESI v4 rules automatically</p>
+                
+                <div class="mb-4">
+                    <p class="text-sm text-gray-500 mb-2">SELECT DIFFICULTY:</p>
+                    <div class="flex justify-center">
+                        <button class="difficulty-btn active" data-task="task_easy">Easy</button>
+                        <button class="difficulty-btn" data-task="task_medium">Med</button>
+                        <button class="difficulty-btn" data-task="task_hard">Hard</button>
+                    </div>
+                </div>
+                
+                <button class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-semibold transition">
+                    ▶ WATCH AI TRIAGE
+                </button>
+            </div>
+            
+            <!-- Human Triage Mode Card -->
+            <div class="mode-card" onclick="startMode('human')">
+                <div class="text-3xl mb-4">👨‍⚕️</div>
+                <h3 class="text-xl font-bold mb-2">HUMAN TRIAGE MODE</h3>
+                <p class="text-gray-400 mb-4">YOU are the triage nurse. Make real decisions. Beat the AI score</p>
+                
+                <div class="mb-4">
+                    <p class="text-sm text-gray-500 mb-2">SELECT DIFFICULTY:</p>
+                    <div class="flex justify-center">
+                        <button class="difficulty-btn active" data-task="task_easy">Easy</button>
+                        <button class="difficulty-btn" data-task="task_medium">Med</button>
+                        <button class="difficulty-btn" data-task="task_hard">Hard</button>
+                    </div>
+                </div>
+                
+                <button class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-semibold transition">
+                    ▶ START TRIAGING
+                </button>
+            </div>
+            
+            <!-- Register Patient Card -->
+            <div class="mode-card" onclick="startMode('register')">
+                <div class="text-3xl mb-4">📋</div>
+                <h3 class="text-xl font-bold mb-2">REGISTER PATIENT</h3>
+                <p class="text-gray-400 mb-4">Register a custom patient with vitals and see their ESI classification</p>
+                
+                <button class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-semibold transition">
+                    + REGISTER PATIENT
+                </button>
+            </div>
         </div>
-        <div class="nav-center">
-            <button class="task-btn" onclick="switchTask('task_easy')">Task 1 Easy</button>
-            <button class="task-btn" onclick="switchTask('task_medium')">Task 2 Medium</button>
-            <button class="task-btn" onclick="switchTask('task_hard')">Task 3 Hard</button>
-        </div>
-        <div class="nav-right">
-            <button class="reset-btn" onclick="switchTask(currentTask)">Reset Episode</button>
-            <span class="connection-status" id="connectionStatus">Connected</span>
-        </div>
-    </nav>
-
-    <!-- METRICS ROW -->
-    <div class="metrics">
-        <div class="metric-card" id="rewardCard">
-            <div class="metric-value" id="episodeReward">0.00</div>
-            <div class="metric-label">Episode Reward</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-value" id="patientsCount">0 / 0</div>
-            <div class="metric-label">Patients</div>
-        </div>
-        <div class="metric-card" id="dangerousCard">
-            <div class="metric-value" id="dangerousErrors">0</div>
-            <div class="metric-label">Dangerous Errors</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-value" id="simTime">00:00</div>
-            <div class="metric-label">Sim Time</div>
+        
+        <div class="text-gray-500 text-sm">
+            Powered by AHRQ ESI v4 | 3 Tasks | 60 Patient Types | OpenEnv Compatible
         </div>
     </div>
 
-    <!-- MAIN CONTENT -->
-    <div class="main">
-        <!-- LEFT: PATIENT QUEUE -->
-        <div class="patient-queue">
-            <div class="queue-header">Patient Queue</div>
-            <div id="patientList">
-                <div style="text-align: center; color: var(--text-secondary); padding: 2rem;">
-                    Loading patients...
+    <!-- Dashboard Screen -->
+    <div id="dashboardScreen" class="screen dashboard hidden">
+        <!-- Top Navigation -->
+        <nav class="top-nav">
+            <div class="nav-section">
+                <span class="font-bold">🏥 ERTriageEnv</span>
+                <span id="modeBadge" class="bg-blue-600 px-2 py-1 rounded text-sm">🤖 AI MODE</span>
+                <span class="text-gray-400">Task: <span id="taskName">Single Patient Triage</span></span>
+            </div>
+            
+            <div class="nav-section task-tabs">
+                <button class="task-tab active" data-task="task_easy">Easy</button>
+                <button class="task-tab" data-task="task_medium">Medium</button>
+                <button class="task-tab" data-task="task_hard">Hard</button>
+            </div>
+            
+            <div class="nav-section">
+                <div id="agentControls" class="hidden">
+                    <button id="startAgentBtn" class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm mr-2">▶ Start</button>
+                    <button id="pauseAgentBtn" class="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded text-sm mr-2 hidden">⏸ Pause</button>
+                    <button id="stopAgentBtn" class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm mr-2 hidden">⏹ Stop</button>
                 </div>
+                <button id="registerPatientBtn" class="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-sm mr-2 hidden">+ Register Patient</button>
+                <button id="resetBtn" class="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm mr-2">🔄 Reset Episode</button>
+                <button id="menuBtn" class="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm">🏠 Menu</button>
+                
+                <div class="connection-status">
+                    <div id="statusDot" class="status-dot connected"></div>
+                    <span id="connectionText">● CONNECTED</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Metrics Row -->
+        <div class="metrics-row">
+            <div class="metric-card">
+                <div id="episodeScore" class="metric-value" style="color: var(--success)">0.00</div>
+                <div class="metric-label">Episode Score</div>
+                <div class="progress-bar">
+                    <div id="scoreProgress" class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div id="patientsCount" class="metric-value">0/0</div>
+                <div class="metric-label">Triaged / Total</div>
+                <div class="progress-bar">
+                    <div id="patientsProgress" class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div id="simTime" class="metric-value">00:00</div>
+                <div class="metric-label">Simulation Time</div>
+            </div>
+            
+            <div class="metric-card">
+                <div id="dangerousErrors" class="metric-value" style="color: var(--success)">0</div>
+                <div class="metric-label">Dangerous Errors</div>
+            </div>
+            
+            <div class="metric-card">
+                <div id="perfectActions" class="metric-value" style="color: var(--gold)">0</div>
+                <div class="metric-label">Perfect Actions (≥0.90)</div>
+            </div>
+            
+            <div class="metric-card">
+                <div id="meanReward" class="metric-value" style="color: var(--warning)">0.00</div>
+                <div class="metric-label">Mean Reward</div>
             </div>
         </div>
 
-        <!-- RIGHT: PANELS -->
-        <div class="right-panels">
-            <!-- BED STATUS -->
-            <div class="panel">
-                <div class="panel-header">Bed Status</div>
-                <div class="bed-grid" id="bedGrid">
-                    <!-- Beds will be populated by JS -->
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Left Column - Waiting Room -->
+            <div class="column column-left">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">🚨 Waiting Room</h3>
+                    <span id="waitingCount" class="bg-red-600 px-2 py-1 rounded text-sm">0 waiting</span>
+                </div>
+                
+                <div class="flex gap-2 mb-4">
+                    <button class="bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-sm">By Wait Time ▼</button>
+                    <button class="bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-sm">By Severity</button>
+                </div>
+                
+                <div id="patientQueue" class="space-y-4">
+                    <!-- Patient cards will be inserted here -->
+                </div>
+                
+                <div id="emptyState" class="text-center py-12 hidden">
+                    <div class="text-4xl mb-4">✅</div>
+                    <div class="text-xl font-semibold mb-2">All patients triaged!</div>
+                    <div class="text-gray-400 mb-4">Final Score: <span id="finalScore">0.00</span></div>
+                    <div class="flex justify-center gap-2">
+                        <button class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded" onclick="resetEpisode(appState.currentTask)">Reset Same Task</button>
+                        <button class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded" onclick="tryHarder()">Try Harder Task</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- REWARD BREAKDOWN -->
-            <div class="panel">
-                <div class="panel-header">Last Reward Breakdown</div>
-                <div id="rewardBreakdown">
-                    <div class="reward-item">
-                        <div class="reward-label">
-                            <span>Priority Accuracy</span>
-                            <span id="priorityValue">0.00</span>
+            <!-- Middle Column - Bed Board -->
+            <div class="column column-middle">
+                <h3 class="text-lg font-semibold mb-4">🛏️ Bed Status Board</h3>
+                
+                <!-- Resus Bays -->
+                <div class="mb-4">
+                    <div class="bg-red-600 px-2 py-1 rounded text-sm mb-2">RESUS BAYS (<span id="resusCount">0</span>/5 occupied)</div>
+                    <div id="resusGrid" class="bed-grid">
+                        <!-- Bed tiles will be inserted here -->
+                    </div>
+                </div>
+                
+                <!-- Acute Bays -->
+                <div class="mb-4">
+                    <div class="bg-orange-600 px-2 py-1 rounded text-sm mb-2">ACUTE BAYS (<span id="acuteCount">0</span>/8 occupied)</div>
+                    <div id="acuteGrid" class="bed-grid">
+                        <!-- Bed tiles will be inserted here -->
+                    </div>
+                </div>
+                
+                <!-- Minor Bays -->
+                <div class="mb-4">
+                    <div class="bg-green-600 px-2 py-1 rounded text-sm mb-2">MINOR BAYS (<span id="minorCount">0</span>/10 occupied)</div>
+                    <div id="minorGrid" class="bed-grid">
+                        <!-- Bed tiles will be inserted here -->
+                    </div>
+                </div>
+                
+                <!-- Occupancy Summary -->
+                <div class="bg-gray-700 rounded p-3">
+                    <div class="text-sm font-semibold mb-2">OCCUPANCY SUMMARY:</div>
+                    <div class="text-xs space-y-1">
+                        <div>Resus: <span id="resusBar">░░░░░</span> <span id="resusPercent">0</span>/5 (0%)</div>
+                        <div>Acute: <span id="acuteBar">░░░░░░░░</span> <span id="acutePercent">0</span>/8 (0%)</div>
+                        <div>Minor: <span id="minorBar">░░░░░░░░░░</span> <span id="minorPercent">0</span>/10 (0%)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Agent Panel -->
+            <div class="column column-right">
+                <!-- Last Triage Action -->
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold mb-4" id="lastActionTitle">🤖 Last Action</h3>
+                    <div id="lastActionContent" class="bg-gray-700 rounded p-3 mb-4">
+                        <div class="text-gray-400 text-center">No actions yet</div>
+                    </div>
+                    
+                    <!-- Reward Bars -->
+                    <div id="rewardBars" class="space-y-2 hidden">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">Priority Accuracy</span>
+                            <span id="priorityValue" class="text-sm font-mono">0.00 / 0.50</span>
                         </div>
-                        <div class="reward-bar">
-                            <div class="reward-fill priority" id="priorityBar" style="width: 0%"></div>
+                        <div class="progress-bar">
+                            <div id="priorityBar" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">Bed Assignment</span>
+                            <span id="bedValue" class="text-sm font-mono">0.00 / 0.30</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="bedBar" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">Escalation</span>
+                            <span id="escValue" class="text-sm font-mono">0.00 / 0.20</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="escalationBar" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">Penalty</span>
+                            <span id="penaltyValue" class="text-sm font-mono">0.00 / 0.00</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="penaltyBar" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        
+                        <div class="border-t pt-2 mt-2">
+                            <div class="flex justify-between items-center font-bold">
+                                <span>TOTAL:</span>
+                                <span id="totalReward">+0.00</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="reward-item">
-                        <div class="reward-label">
-                            <span>Bed Assignment</span>
-                            <span id="bedValue">0.00</span>
-                        </div>
-                        <div class="reward-bar">
-                            <div class="reward-fill bed" id="bedBar" style="width: 0%"></div>
-                        </div>
+                </div>
+                
+                <!-- Action Log -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">📋 Triage Log <span id="logCount" class="text-sm text-gray-400">(0)</span></h3>
+                    <div id="actionLog" class="bg-gray-700 rounded p-3 h-64 overflow-y-auto font-mono text-xs space-y-1">
+                        <div class="text-gray-400">No actions yet...</div>
                     </div>
-                    <div class="reward-item">
-                        <div class="reward-label">
-                            <span>Escalation</span>
-                            <span id="escalationValue">0.00</span>
-                        </div>
-                        <div class="reward-bar">
-                            <div class="reward-fill escalation" id="escalationBar" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    <div class="reward-item">
-                        <div class="reward-label">
-                            <span>Penalty</span>
-                            <span id="penaltyValue">0.00</span>
-                        </div>
-                        <div class="reward-bar">
-                            <div class="reward-fill penalty" id="penaltyBar" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    <div class="total-reward" id="totalReward">0.00</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ACTION LOG -->
-    <div class="action-log">
-        <div class="log-header">Action Log</div>
-        <div id="actionLog">
-            <div style="text-align: center; color: var(--text-secondary); padding: 1rem;">
-                Waiting for actions...
+    <!-- Triage Decision Panel -->
+    <div id="triagePanel" class="triage-panel">
+        <div class="p-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">⚡ Triage Decision</h3>
+                <button onclick="closeTriagePanel()" class="text-gray-400 hover:text-white">✕</button>
+            </div>
+            
+            <div id="triagePatientInfo" class="mb-4 text-sm">
+                <!-- Patient info will be inserted here -->
+            </div>
+            
+            <!-- Full Vitals Display -->
+            <div class="bg-gray-700 rounded p-3 mb-4 text-xs">
+                <div class="font-semibold mb-2">Vital Signs Assessment</div>
+                <div id="vitalsDisplay">
+                    <!-- Vitals will be inserted here -->
+                </div>
+            </div>
+            
+            <!-- Chief Complaint -->
+            <div class="mb-4">
+                <div class="font-semibold mb-2">Chief Complaint:</div>
+                <div id="chiefComplaint" class="bg-gray-700 rounded p-3"></div>
+            </div>
+            
+            <!-- Decision Section -->
+            <div class="space-y-4">
+                <!-- Priority Selection -->
+                <div>
+                    <div class="font-semibold mb-2">ASSIGN ESI PRIORITY:</div>
+                    <div class="flex gap-2">
+                        <button class="priority-btn p1" data-priority="1">P1<br>IMMED</button>
+                        <button class="priority-btn p2" data-priority="2">P2<br>EMERG</button>
+                        <button class="priority-btn p3" data-priority="3">P3<br>URGENT</button>
+                        <button class="priority-btn p4" data-priority="4">P4<br>LESS</button>
+                    </div>
+                </div>
+                
+                <!-- Bed Type Selection -->
+                <div>
+                    <div class="font-semibold mb-2">ASSIGN BED TYPE:</div>
+                    <div class="flex gap-2">
+                        <button class="bed-btn resus" data-bed="resus">🔴 RESUS</button>
+                        <button class="bed-btn acute" data-bed="acute">🟡 ACUTE</button>
+                        <button class="bed-btn minor" data-bed="minor">🟢 MINOR</button>
+                        <button class="bed-btn" data-bed="waiting_area">⬜ WAITING AREA</button>
+                    </div>
+                </div>
+                
+                <!-- Escalation -->
+                <div>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="escalateCheck" class="rounded">
+                        <span>Escalate — Request immediate physician attention</span>
+                    </label>
+                </div>
+                
+                <!-- Clinical Notes -->
+                <div>
+                    <div class="font-semibold mb-2">CLINICAL NOTES (optional):</div>
+                    <input type="text" id="reasoningInput" class="w-full bg-gray-700 rounded px-3 py-2" placeholder="Optional reasoning...">
+                </div>
+                
+                <!-- Submit Button -->
+                <button id="submitTriageBtn" class="w-full bg-green-600 hover:bg-green-700 py-3 rounded font-semibold disabled:bg-gray-600" disabled>
+                    ✅ SUBMIT TRIAGE DECISION
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- FOOTER -->
-    <footer class="footer">
-        ESI grading: AHRQ Emergency Severity Index v4 (Public Domain)
-    </footer>
+    <!-- Patient Registration Modal -->
+    <div id="registrationModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold">📋 Register New Patient</h3>
+                <button onclick="closeRegistrationModal()" class="text-gray-400 hover:text-white">✕</button>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-6">
+                <!-- Left Column - Patient Info -->
+                <div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">Name:</label>
+                            <input type="text" id="regName" class="w-full bg-gray-700 rounded px-3 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">Age:</label>
+                            <input type="number" id="regAge" class="w-full bg-gray-700 rounded px-3 py-2" min="0" max="120">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">Sex:</label>
+                            <div class="flex gap-4">
+                                <label><input type="radio" name="sex" value="M" checked> Male</label>
+                                <label><input type="radio" name="sex" value="F"> Female</label>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">Arrival:</label>
+                            <select id="regArrival" class="w-full bg-gray-700 rounded px-3 py-2">
+                                <option value="ambulance">🚑 Ambulance</option>
+                                <option value="walk_in">🚶 Walk-in</option>
+                                <option value="transfer">🔄 Transfer</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">Chief Complaint:</label>
+                            <textarea id="regComplaint" class="w-full bg-gray-700 rounded px-3 py-2 h-20"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Fill Presets -->
+                    <div class="mt-6">
+                        <div class="text-sm font-semibold mb-2">⚡ Quick Fill — Common Presentations:</div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="quickFill('stemi')" class="bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs">💔 STEMI</button>
+                            <button onclick="quickFill('asthma')" class="bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs">🫁 Asthma Attack</button>
+                            <button onclick="quickFill('stroke')" class="bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs">🧠 Stroke</button>
+                            <button onclick="quickFill('trauma')" class="bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs">🤕 Major Trauma</button>
+                            <button onclick="quickFill('sepsis')" class="bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs">🤒 Sepsis</button>
+                            <button onclick="quickFill('injury')" class="bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs">🦵 Minor Injury</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column - Vital Signs -->
+                <div>
+                    <div class="text-sm font-semibold mb-4">Enter Patient Vitals:</div>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs mb-1">Heart Rate: <span class="text-gray-400">(60-100)</span></label>
+                            <input type="number" id="regHR" class="w-full bg-gray-700 rounded px-3 py-2" min="20" max="250">
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1">Systolic BP: <span class="text-gray-400">(90-140)</span></label>
+                            <input type="number" id="regSBP" class="w-full bg-gray-700 rounded px-3 py-2" min="50" max="250">
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1">Diastolic BP: <span class="text-gray-400">(60-90)</span></label>
+                            <input type="number" id="regDBP" class="w-full bg-gray-700 rounded px-3 py-2" min="30" max="150">
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1">SpO2: <span class="text-gray-400">(95-100)</span></label>
+                            <input type="number" id="regSpO2" class="w-full bg-gray-700 rounded px-3 py-2" min="60" max="100">
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1">Respiratory Rate: <span class="text-gray-400">(12-20)</span></label>
+                            <input type="number" id="regRR" class="w-full bg-gray-700 rounded px-3 py-2" min="4" max="60">
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1">Temperature: <span class="text-gray-400">(36.1-37.8°C)</span></label>
+                            <input type="number" id="regTemp" class="w-full bg-gray-700 rounded px-3 py-2" min="32" max="43" step="0.1">
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1">GCS: <span class="text-gray-400">(3-15)</span></label>
+                            <input type="number" id="regGCS" class="w-full bg-gray-700 rounded px-3 py-2" min="3" max="15">
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1">Pain Score:</label>
+                            <div class="flex gap-1">
+                                <button onclick="setPain(0)" class="pain-btn bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs flex-1">0</button>
+                                <button onclick="setPain(1)" class="pain-btn bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs flex-1">1</button>
+                                <button onclick="setPain(2)" class="pain-btn bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs flex-1">2</button>
+                                <button onclick="setPain(3)" class="pain-btn bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs flex-1">3</button>
+                                <button onclick="setPain(4)" class="pain-btn bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs flex-1">4</button>
+                                <button onclick="setPain(5)" class="pain-btn bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs flex-1">5</button>
+                                <button onclick="setPain(6)" class="pain-btn bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs flex-1">6</button>
+                                <button onclick="setPain(7)" class="pain-btn bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs flex-1">7</button>
+                                <button onclick="setPain(8)" class="pain-btn bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs flex-1">8</button>
+                                <button onclick="setPain(9)" class="pain-btn bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs flex-1">9</button>
+                                <button onclick="setPain(10)" class="pain-btn bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs flex-1">10</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Live ESI Preview -->
+                    <div class="mt-6 bg-gray-700 rounded p-3">
+                        <div class="text-sm font-semibold mb-2">Based on these vitals, ESI prediction:</div>
+                        <div id="esiPreview" class="text-lg font-bold">ESI-5 LESS URGENT</div>
+                        <div id="esiExplanation" class="text-xs text-gray-400 mt-1">Enter vitals to see prediction</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Submit Buttons -->
+            <div class="flex justify-end gap-4 mt-6">
+                <button onclick="closeRegistrationModal()" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded">Cancel</button>
+                <button onclick="submitRegistration()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded">Register & Triage Now →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Episode Complete Modal -->
+    <div id="completeModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="text-center">
+                <div id="completeHeader" class="text-2xl font-bold mb-4">🎉 Episode Complete!</div>
+                
+                <!-- Score Display -->
+                <div class="w-32 h-32 mx-auto mb-6 relative">
+                    <svg class="w-full h-full transform -rotate-90">
+                        <circle cx="64" cy="64" r="56" stroke="currentColor" stroke-width="8" fill="none" class="text-gray-600"></circle>
+                        <circle id="scoreCircle" cx="64" cy="64" r="56" stroke="currentColor" stroke-width="8" fill="none" 
+                                stroke-dasharray="351.86" stroke-dashoffset="351.86" class="transition-all duration-1000"></circle>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <div id="completeScore" class="text-3xl font-bold">0.00</div>
+                        <div id="completeStatus" class="text-sm">PASSED ✅</div>
+                    </div>
+                </div>
+                
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <div class="bg-gray-700 rounded p-3">
+                        <div id="completeSteps" class="text-xl font-bold">0</div>
+                        <div class="text-xs text-gray-400">Steps</div>
+                    </div>
+                    <div class="bg-gray-700 rounded p-3">
+                        <div id="completeTime" class="text-xl font-bold">00:00</div>
+                        <div class="text-xs text-gray-400">Time</div>
+                    </div>
+                    <div class="bg-gray-700 rounded p-3">
+                        <div id="completeErrors" class="text-xl font-bold">0</div>
+                        <div class="text-xs text-gray-400">Danger Errors</div>
+                    </div>
+                    <div class="bg-gray-700 rounded p-3">
+                        <div id="completePerfect" class="text-xl font-bold">0</div>
+                        <div class="text-xs text-gray-400">Perfect Actions</div>
+                    </div>
+                </div>
+                
+                <!-- Reward Breakdown -->
+                <div class="bg-gray-700 rounded p-4 mb-6 text-left">
+                    <div class="font-semibold mb-2">Average scores across all actions:</div>
+                    <div class="space-y-1 text-sm">
+                        <div>Priority Accuracy <span id="avgPriority" class="float-right font-mono">0.00/0.50 (0%)</span></div>
+                        <div>Bed Assignment <span id="avgBed" class="float-right font-mono">0.00/0.30 (0%)</span></div>
+                        <div>Escalation <span id="avgEscalation" class="float-right font-mono">0.00/0.20 (0%)</span></div>
+                        <div>Penalties <span id="avgPenalty" class="float-right font-mono">0.00</span></div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex justify-center gap-4">
+                    <button onclick="tryAgain()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded">🔄 Try Again</button>
+                    <button onclick="tryHarder()" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded">⬆️ Try Harder</button>
+                    <button onclick="tryEasier()" class="bg-yellow-600 hover:bg-yellow-700 px-6 py-2 rounded">⬇️ Try Easier</button>
+                    <button onclick="backToMenu()" class="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded">🏠 Main Menu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <div id="toastContent">
+            <div class="toast-title"></div>
+            <div class="toast-message"></div>
+        </div>
+    </div>
 
     <script>
+        // Global Constants
         const BASE = '';
-        let currentTask = 'task_easy';
-        let actionLog = [];
-        let lastMetrics = {};
-
-        // STATE POLLING
-        async function pollState() {
-            try {
-                const res = await fetch(BASE + '/state');
-                if (!res.ok) { showConnecting(); return; }
-                const state = await res.json();
-                renderMetrics(state);
-                renderPatients(state.patients_waiting);
-                renderBeds(state.beds);
-                updateTaskButtons(state.task_id);
-                document.getElementById('connectionStatus').textContent = 'Connected';
-                document.getElementById('connectionStatus').style.color = 'var(--success)';
-            } catch(e) { 
-                showConnecting(); 
-            }
+        
+        // Helper functions for safe number handling
+        function safeFixed(val, digits = 2) {
+            const n = parseFloat(val);
+            return isNaN(n) ? '0.00' : n.toFixed(digits);
         }
 
-        async function pollMetrics() {
-            try {
-                const res = await fetch(BASE + '/metrics');
-                const m = await res.json();
-                if (m.last_reward) {
-                    renderRewardBreakdown(m.last_reward);
-                }
-                const dangerous = m.dangerous_errors || 0;
-                const dangerousCard = document.getElementById('dangerousCard');
-                document.getElementById('dangerousErrors').textContent = dangerous;
-                
-                if (dangerous > 0) {
-                    dangerousCard.classList.add('reward-low');
-                    dangerousCard.classList.remove('reward-high');
-                } else {
-                    dangerousCard.classList.add('reward-high');
-                    dangerousCard.classList.remove('reward-low');
-                }
-            } catch(e) {
-                console.error('Metrics error:', e);
-            }
+        function safeInt(val) {
+            const n = parseInt(val);
+            return isNaN(n) ? 0 : n;
         }
 
-        // RENDER FUNCTIONS
-        function renderMetrics(state) {
-            const reward = state.cumulative_reward || 0;
-            const rewardCard = document.getElementById('rewardCard');
-            document.getElementById('episodeReward').textContent = reward.toFixed(2);
-            
-            rewardCard.classList.remove('reward-high', 'reward-medium', 'reward-low');
-            if (reward > 0.6) {
-                rewardCard.classList.add('reward-high');
-            } else if (reward >= 0.3) {
-                rewardCard.classList.add('reward-medium');
-            } else {
-                rewardCard.classList.add('reward-low');
-            }
-
-            document.getElementById('patientsCount').textContent = 
-                `${state.patients_triaged} / ${state.total_patients}`;
-            document.getElementById('simTime').textContent = fmtTime(state.shift_time);
+        function safeSetText(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
         }
 
-        function renderPatients(patients) {
-            const container = document.getElementById('patientList');
-            if (!patients || patients.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 2rem;">No patients waiting</div>';
-                return;
-            }
+        // Application State
+        let appState = {
+            screen: 'welcome',
+            mode: null,
+            currentTask: 'task_easy',
+            agentRunning: false,
+            agentInterval: null,
+            agentSpeed: 1500,
+            selectedPatient: null,
+            actionLog: [],
+            patientsMap: {},      // ADD THIS
+            registeredPatients: [],
+            episodeData: null,
+            lastReward: null,
+            metrics: null,
+            pollInterval: null,
+            connectionStatus: 'connected'
+        };
 
-            container.innerHTML = patients.map(patient => {
-                const priorityClass = `priority-p${patient.priority}`;
-                const alerts = patient.active_alerts || [];
-                const alertClass = alerts.length > 0 ? 'alert' : '';
-                const waitClass = patient.waiting_minutes > 20 ? 'waiting-long' : '';
-                
-                return `
-                    <div class="patient-row ${alertClass} ${waitClass}">
-                        <div class="priority-badge ${priorityClass}">P${patient.priority}</div>
-                        <div class="patient-info">
-                            ${patient.age}${patient.sex} | ${patient.chief_complaint}
-                        </div>
-                        <div class="vitals">
-                            HR:${patient.vitals.heart_rate}/SpO2:${patient.vitals.spo2}/BP:${patient.vitals.bp_systolic}
-                        </div>
-                        <div class="wait-time">${patient.waiting_minutes.toFixed(1)}m</div>
-                    </div>
-                `;
-            }).join('');
+        // Global patients map for quick lookup
+        let patientsMap = {};
+
+        // Task Configuration
+        const TASK_CONFIG = {
+            task_easy: { n_patients: 1, max_steps: 1, passing_score: 0.70, name: 'Single Patient Triage' },
+            task_medium: { n_patients: 15, max_steps: 30, passing_score: 0.60, name: 'Multi-Patient Triage' },
+            task_hard: { n_patients: 40, max_steps: 80, passing_score: 0.50, name: 'High-Volume Triage' }
+        };
+
+        const TASK_ORDER = ['task_easy', 'task_medium', 'task_hard'];
+        const TASK_DISPLAY = {
+            'task_easy': 'Easy',
+            'task_medium': 'Medium', 
+            'task_hard': 'Hard'
+        };
+
+        function getCurrentTaskIndex() {
+            return TASK_ORDER.indexOf(appState.currentTask);
         }
 
-        function renderBeds(beds) {
-            const container = document.getElementById('bedGrid');
-            container.innerHTML = beds.map(bed => {
-                const bedClass = bed.bed_type;
-                const occupiedClass = bed.occupied ? 'occupied' : 'empty';
-                const content = bed.occupied ? 
-                    `<div class="bed-id">${bed.bed_id}</div>${bed.patient_id}` : 
-                    `<div class="bed-id">${bed.bed_id}</div>`;
-                
-                return `<div class="bed ${bedClass} ${occupiedClass}">${content}</div>`;
-            }).join('');
-        }
-
-        function renderRewardBreakdown(reward) {
-            if (!reward) return;
-            
-            document.getElementById('priorityValue').textContent = reward.priority_score?.toFixed(2) || '0.00';
-            document.getElementById('bedValue').textContent = reward.bed_score?.toFixed(2) || '0.00';
-            document.getElementById('escalationValue').textContent = reward.esc_score?.toFixed(2) || '0.00';
-            document.getElementById('penaltyValue').textContent = Math.abs(reward.penalty || 0).toFixed(2);
-            
-            document.getElementById('priorityBar').style.width = `${(reward.priority_score / 0.5) * 100}%`;
-            document.getElementById('bedBar').style.width = `${(reward.bed_score / 0.3) * 100}%`;
-            document.getElementById('escalationBar').style.width = `${(reward.esc_score / 0.2) * 100}%`;
-            document.getElementById('penaltyBar').style.width = `${Math.min(100, (Math.abs(reward.penalty || 0) / 0.5) * 100)}%`;
-            
-            const total = reward.total || 0;
-            const totalElement = document.getElementById('totalReward');
-            totalElement.textContent = total.toFixed(2);
-            
-            totalElement.classList.remove('log-reward-good', 'log-reward-medium', 'log-reward-bad');
-            if (total > 0.5) {
-                totalElement.classList.add('log-reward-good');
-            } else if (total >= 0.2) {
-                totalElement.classList.add('log-reward-medium');
-            } else {
-                totalElement.classList.add('log-reward-bad');
-            }
-        }
-
-        function updateTaskButtons(taskId) {
-            currentTask = taskId;
-            document.querySelectorAll('.task-btn').forEach(btn => {
-                btn.classList.remove('active');
+        // Initialize Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Task tab switching
+            document.querySelectorAll('.task-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    switchTask(this.dataset.task);
+                });
             });
             
-            const activeBtn = Array.from(document.querySelectorAll('.task-btn'))
-                .find(btn => btn.textContent.toLowerCase().includes(taskId.replace('task_', '')));
-            if (activeBtn) {
-                activeBtn.classList.add('active');
-            }
+            // Difficulty buttons on welcome screen
+            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    appState.currentTask = this.dataset.task;
+                });
+            });
+            
+            // Priority buttons in triage panel
+            document.querySelectorAll('.priority-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    setPriority(parseInt(this.dataset.priority));
+                });
+            });
+            
+            // Bed buttons in triage panel
+            document.querySelectorAll('.bed-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    setBed(this.dataset.bed);
+                });
+            });
+            
+            // Navigation buttons
+            document.getElementById('menuBtn').addEventListener('click', backToMenu);
+            document.getElementById('resetBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Reset button clicked, currentTask:', appState.currentTask);
+                resetEpisode(appState.currentTask);
+            });
+            document.getElementById('registerPatientBtn').addEventListener('click', openRegistrationModal);
+            
+            // Agent controls
+            document.getElementById('startAgentBtn').addEventListener('click', startAgent);
+            document.getElementById('pauseAgentBtn').addEventListener('click', pauseAgent);
+            document.getElementById('stopAgentBtn').addEventListener('click', stopAgent);
+            
+            // Triage panel submit
+            document.getElementById('submitTriageBtn').addEventListener('click', submitHumanTriage);
+            
+            // Form inputs for registration
+            document.querySelectorAll('#registrationModal input, #registrationModal select, #registrationModal textarea').forEach(input => {
+                input.addEventListener('input', updateLiveESIPreview);
+            });
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeTriagePanel();
+                    closeRegistrationModal();
+                } else if (e.key === ' ' && appState.mode === 'ai') {
+                    e.preventDefault();
+                    if (appState.agentRunning) {
+                        pauseAgent();
+                    } else {
+                        startAgent();
+                    }
+                } else if (e.key === 'Enter' && appState.selectedPatient) {
+                    submitHumanTriage();
+                } else if (e.key >= '1' && e.key <= '4' && appState.selectedPatient) {
+                    selectPriority(parseInt(e.key));
+                }
+            });
+            
+            // Start connection monitoring
+            startConnectionMonitoring();
+        });
+
+        // ── NAVIGATION FUNCTIONS ──────────────────────────────────────
+        function showWelcome() {
+            appState.screen = 'welcome';
+            document.getElementById('welcomeScreen').classList.remove('hidden');
+            document.getElementById('dashboardScreen').classList.add('hidden');
+            stopPolling();
+            stopAgent();
         }
 
-        function addToActionLog(entry) {
-            actionLog.unshift(entry);
-            if (actionLog.length > 8) {
-                actionLog = actionLog.slice(0, 8);
+        function startMode(mode) {
+            appState.mode = mode;
+            showDashboard();
+            
+            if (mode === 'register') {
+                openRegistrationModal();
+            } else if (mode === 'ai') {
+                document.getElementById('modeBadge').textContent = '🤖 AI MODE';
+                document.getElementById('modeBadge').className = 'bg-blue-600 px-2 py-1 rounded text-sm';
+                document.getElementById('agentControls').classList.remove('hidden');
+                document.getElementById('registerPatientBtn').classList.add('hidden');
+                document.getElementById('lastActionTitle').textContent = '🤖 Last Action';
+            } else {
+                document.getElementById('modeBadge').textContent = '👨‍⚕️ HUMAN MODE';
+                document.getElementById('modeBadge').className = 'bg-green-600 px-2 py-1 rounded text-sm';
+                document.getElementById('agentControls').classList.add('hidden');
+                document.getElementById('registerPatientBtn').classList.remove('hidden');
+                document.getElementById('lastActionTitle').textContent = '👨‍⚕️ Last Action';
             }
             
-            const container = document.getElementById('actionLog');
-            container.innerHTML = actionLog.map(log => {
-                const time = fmtTime(log.timestamp || 0);
-                const rewardClass = log.reward > 0.5 ? 'log-reward-good' : 
-                                   log.reward >= 0.2 ? 'log-reward-medium' : 'log-reward-bad';
-                const resetClass = log.type === 'reset' ? 'log-reset' : '';
-                
-                return `
-                    <div class="log-entry">
-                        <span class="log-time">[${time}]</span>
-                        <span class="${resetClass} ${rewardClass}">
-                            ${log.message}
-                        </span>
-                    </div>
-                `;
-            }).join('');
+            resetEpisode(appState.currentTask);
         }
 
-        // UTILITY FUNCTIONS
-        async function switchTask(taskId) {
+        function showDashboard() {
+            appState.screen = 'dashboard';
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('dashboardScreen').classList.remove('hidden');
+            updateTaskDisplay();
+        }
+
+        function showEpisodeComplete(finalState) {
+            console.log('showEpisodeComplete called');
+            console.log('actionLog length:', appState.actionLog?.length);
+            console.log('actionLog rewards:', 
+                appState.actionLog?.map(a => a.reward?.total));
+            
+            const modal = document.getElementById('completeModal');
+            if (!modal) {
+                console.error('Modal not found!');
+                return;
+            }
+            
+            stopAgent();
+            stopPolling();
+            
+            const log = appState.actionLog || [];
+            const steps = log.length;
+            
+            // Get time
+            const timeVal = finalState?.shift_time || 0;
+            const mins = Math.floor(timeVal);
+            const secs = Math.round((timeVal - mins) * 60);
+            const timeStr = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+            
+            // Count stats
+            const dangerous = log.filter(a => a.reward?.penalty <= -0.30).length;
+            const perfect = log.filter(a => a.reward?.total >= 0.90).length;
+            
+            // Calculate score from actionLog
+            const rewardTotals = log
+                .map(a => a.reward?.total)
+                .filter(v => v !== undefined && v !== null && !isNaN(v));
+            
+            console.log('Valid reward totals:', rewardTotals);
+            
+            let taskScore = 0;
+            if (rewardTotals.length > 0) {
+                taskScore = rewardTotals.reduce((a, b) => a + b, 0) / rewardTotals.length;
+            } else {
+                // Fallback: read from top bar display
+                const scoreEl = document.getElementById('episodeScore');
+                taskScore = parseFloat(scoreEl?.textContent || '0') || 0;
+            }
+            taskScore = Math.max(-1, Math.min(1, taskScore));
+            
+            const thresholds = {
+                'task_easy': 0.70,
+                'task_medium': 0.60,
+                'task_hard': 0.50
+            };
+            const threshold = thresholds[appState.currentTask] || 0.60;
+            const passed = taskScore >= threshold;
+            
+            console.log('Final taskScore:', taskScore, 'passed:', passed);
+            
+            // Update modal
+            safeSetText('completeScore', taskScore.toFixed(2));
+            safeSetText('completeStatus', passed ? 'PASSED ✅' : 'FAILED ❌');
+            safeSetText('completeSteps', steps);
+            safeSetText('completeTime', timeStr);
+            safeSetText('completeDangerous', dangerous);
+            safeSetText('completePerfect', perfect);
+            
+            // Color score
+            const scoreCircle = document.getElementById('completeScore');
+            if (scoreCircle) {
+                scoreCircle.style.color = taskScore >= 0.7 ? '#22c55e'
+                    : taskScore >= 0.4 ? '#eab308' : '#ef4444';
+            }
+            
+            modal.classList.add('open');
+            
+            // Animate score circle
+            setTimeout(() => {
+                const circle = document.getElementById('scoreCircle');
+                if (circle) {
+                    const circumference = 2 * Math.PI * 56;
+                    const offset = circumference * (1 - taskScore);
+                    circle.style.strokeDashoffset = offset;
+                    circle.style.stroke = taskScore >= 0.6 ? 'var(--success)' : taskScore >= 0.3 ? 'var(--warning)' : 'var(--danger)';
+                }
+            }, 100);
+        }
+
+        function backToMenu() {
+            showWelcome();
+        }
+
+        // ── API CALLS ────────────────────────────────────────
+        async function resetEpisode(taskId = null, seed = 42) {
+            console.log('resetEpisode called with taskId:', taskId, typeof taskId);
             try {
-                await fetch(BASE + '/reset?task_id=' + taskId + '&seed=42');
-                actionLog = [];
-                addToActionLog({
-                    type: 'reset',
-                    message: `RESET to ${taskId}`,
-                    timestamp: Date.now() / 60000
+                const task = taskId || appState.currentTask;
+                console.log('Using task:', task);
+                const response = await fetch(BASE + `/reset?task_id=${task}&seed=${seed}`);
+                if (!response.ok) {
+                    const err = await response.text();
+                    showToast('Failed to reset: ' + err, 'error');
+                    return;
+                }
+                const state = await response.json();
+                
+                // Clear action log on reset
+                appState.actionLog = [];
+                appState.metrics = null;
+                appState.patientsMap = {};
+                appState.selectedPatient = null;
+                appState.lastReward = null;
+                appState.episodeData = state;
+                
+                // Add episode start entry
+                appState.actionLog.push({
+                    patientId: null,
+                    priority: null,
+                    bedType: null,
+                    escalate: false,
+                    shiftTime: 0,
+                    reward: null,
+                    rewardTotal: null,
+                    isReset: true,
+                    taskId: task
                 });
-                await pollState();
-            } catch(e) {
-                showConnecting();
+                
+                // Render action log to show episode start
+                renderActionLog();
+                
+                // Safe update UI
+                updateAllUI({observation: state, reward: null, done: false, info: {}});
+                
+                if (appState.mode === 'ai') {
+                    // Auto-start agent after reset
+                    setTimeout(() => startAgent(), 500);
+                }
+                
+                return state;
+            } catch (error) {
+                console.error('Reset error:', error);
+                showToast('Failed to reset episode', 'error');
+                return null;
             }
         }
 
-        function showConnecting() {
-            document.getElementById('connectionStatus').textContent = 'Connecting to environment...';
-            document.getElementById('connectionStatus').style.color = 'var(--warning)';
+        async function getState() {
+            try {
+                const response = await fetch(BASE + '/state');
+                if (!response.ok) throw new Error('Get state failed');
+                
+                const state = await response.json();
+                appState.episodeData = state;
+                
+                // Do NOT auto-show episode complete here
+                // Let the calling functions handle it
+                // if (state.episode_done) {
+                //     stopAgent();
+                //     showEpisodeComplete(state);
+                // }
+                
+                return state;
+            } catch (error) {
+                console.error('Get state error:', error);
+                return null;
+            }
         }
 
-        function fmtTime(mins) {
-            const m = Math.floor(mins);
-            const s = Math.round((mins - m) * 60);
-            return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        async function submitStep(action) {
+            try {
+                const resp = await fetch(BASE + '/step', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(action)
+                });
+                if (!resp.ok) {
+                    const errData = await resp.json().catch(() => ({}));
+                    showToast('Invalid action: ' + (errData.detail || resp.status), 'error');
+                    return null;
+                }
+                const result = await resp.json();
+                
+                // Store in actionLog with complete reward
+                if (!appState.actionLog) appState.actionLog = [];
+                appState.actionLog.push({
+                    patientId: action.patient_id,
+                    priority: action.priority,
+                    bedType: action.bed_type,
+                    escalate: action.escalate,
+                    shiftTime: result.observation?.shift_time || 0,
+                    reward: result.reward,
+                    rewardTotal: result.reward?.total || 0,
+                    done: result.done
+                });
+                
+                console.log('Action logged. Log length:', appState.actionLog.length,
+                            'reward:', result.reward?.total);
+                
+                // Render action log immediately
+                renderActionLog();
+                
+                // Update app state
+                appState.episodeData = result.observation;
+                appState.lastReward = result.reward;
+                
+                // Get metrics
+                try {
+                    const mResp = await fetch(BASE + '/metrics');
+                    if (mResp.ok) appState.metrics = await mResp.json();
+                } catch(e) {}
+                
+                // Do NOT auto-show episode complete here
+                // Let the calling functions handle it
+                // if (result.observation && result.observation.episode_done) {
+                //     stopAgent();
+                //     showEpisodeComplete(result.observation);
+                // }
+                
+                updateAllUI(result);
+                return result;
+            } catch(e) {
+                console.error('submitStep error:', e);
+                showToast('Step failed: ' + e.message, 'error');
+                return null;
+            }
         }
 
-        function flashElement(elementId) {
-            const element = document.getElementById(elementId);
-            element.classList.add('flash');
-            setTimeout(() => element.classList.remove('flash'), 500);
+        async function getMetrics() {
+            try {
+                const response = await fetch(BASE + '/metrics');
+                if (!response.ok) throw new Error('Get metrics failed');
+                
+                const metrics = await response.json();
+                appState.metrics = metrics;
+                return metrics;
+            } catch (error) {
+                console.error('Get metrics error:', error);
+                return null;
+            }
         }
 
-        // INITIALIZATION
-        setInterval(pollState, 2000);
-        setInterval(pollMetrics, 3000);
-        
-        // Initial load
-        pollState();
-        
-        // Add initial log entry
-        addToActionLog({
-            type: 'reset',
-            message: 'Dashboard initialized',
-            timestamp: Date.now() / 60000
+        // ── AI AGENT ─────────────────────────────────────────
+        function startAgent() {
+            if (appState.agentRunning) return;
+            
+            appState.agentRunning = true;
+            document.getElementById('startAgentBtn').classList.add('hidden');
+            document.getElementById('pauseAgentBtn').classList.remove('hidden');
+            document.getElementById('stopAgentBtn').classList.remove('hidden');
+            
+            runAIStep();
+            appState.agentInterval = setInterval(runAIStep, appState.agentSpeed);
+        }
+
+        function pauseAgent() {
+            if (!appState.agentRunning) return;
+            
+            appState.agentRunning = false;
+            clearInterval(appState.agentInterval);
+            document.getElementById('startAgentBtn').classList.remove('hidden');
+            document.getElementById('pauseAgentBtn').classList.add('hidden');
+        }
+
+        function stopAgent() {
+            appState.agentRunning = false;
+            clearInterval(appState.agentInterval);
+            document.getElementById('startAgentBtn').classList.remove('hidden');
+            document.getElementById('pauseAgentBtn').classList.add('hidden');
+            document.getElementById('stopAgentBtn').classList.add('hidden');
+        }
+
+        async function runAIStep() {
+            if (!appState.agentRunning) return;
+            
+            const stateResp = await fetch(BASE + '/state');
+            if (!stateResp.ok) return;
+            const state = await stateResp.json();
+            
+            if (state.episode_done || !state.patients_waiting?.length) {
+                stopAgent();
+                // Do NOT auto-show here - let runAIStep handle it
+                // setTimeout(() => showEpisodeComplete(state), 500);
+                return;
+            }
+            
+            const patient = state.patients_waiting[0];
+            const decision = aiTriage(patient);
+            const action = {
+                patient_id: patient.patient_id,
+                priority: decision.priority,
+                bed_type: decision.bed_type,
+                escalate: decision.escalate,
+                reasoning: 'ESI v4 AI triage'
+            };
+            
+            const result = await submitStep(action);
+            if (!result) return;
+            
+            // UPDATE LAST ACTION PANEL — THIS IS MISSING
+            if (result.reward) {
+                appState.lastReward = result.reward;
+                renderRewardBars(result.reward);
+                
+                // Update Last Action header text
+                const lastActionEl = document.getElementById('lastActionHeader');
+                if (lastActionEl) {
+                    lastActionEl.textContent = 
+                        patient.patient_id + ' → ESI-' + decision.priority + 
+                        ' | ' + decision.bed_type;
+                }
+            }
+            
+            // Show visual feedback
+            flashCard(patient.patient_id, result.reward.total >= 0.50 ? 'green' : 'red');
+            
+            // Update all UI
+            updateAllUI(result);
+            
+            if (result.done) {
+                stopAgent();
+                // Do NOT auto-show here - let the main logic handle it
+                // setTimeout(() => showEpisodeComplete(result.observation), 500);
+            }
+        }
+
+        function aiTriage(patient) {
+            const v = patient.vitals;
+            const age = patient.age || 30;
+            
+            // ESI-1: Immediate life threat → RESUS
+            if (v.spo2 <= 85 || v.gcs <= 8 ||
+                (v.bp_systolic < 80 && age >= 18) ||
+                v.heart_rate > 150) {
+                return {priority: 1, bed_type: 'resus', escalate: true};
+            }
+            
+            // ESI-2: High risk → ACUTE + escalate
+            if (v.spo2 <= 92 || v.gcs <= 13 ||
+                (v.bp_systolic <= 100 && age >= 18) ||
+                v.heart_rate >= 120 || v.temperature > 39.5) {
+                return {priority: 2, bed_type: 'acute', escalate: true};
+            }
+            
+            // ESI-3: Urgent — count resources
+            let resources = 0;
+            if (v.spo2 < 96) resources++;
+            if (v.heart_rate > 100 || v.heart_rate < 55) resources++;
+            if (v.temperature > 38.5) resources++;
+            if (v.pain_score >= 5) resources++;
+            
+            if (resources >= 2) {
+                // ESI-3 with multiple abnormals → acute
+                return {priority: 3, bed_type: 'acute', escalate: false};
+            }
+            
+            if (resources === 1) {
+                // ESI-3 with one abnormal → minor
+                return {priority: 3, bed_type: 'minor', escalate: false};
+            }
+            
+            // ESI-4: Less urgent → minor
+            if (v.pain_score >= 3 || v.heart_rate > 90) {
+                return {priority: 4, bed_type: 'minor', escalate: false};
+            }
+            
+            // ESI-5: Non urgent → waiting area
+            return {priority: 4, bed_type: 'waiting_area', escalate: false};
+        }
+
+        // ── HUMAN MODE ───────────────────────────────────────
+        function selectPatient(patientId) {
+            const patient = (appState.patientsMap || {})[patientId];
+            if (!patient) return;
+            appState.selectedPatient = patient;
+            openTriagePanel(patientId);
+        }
+
+        function openTriagePanel(patientId) {
+            // Try appState.patientsMap first
+            const patient = (appState.patientsMap || {})[patientId];
+            if (!patient) {
+                console.error('Patient not found in map:', patientId);
+                showToast('Patient data not found. Please refresh.', 'error');
+                return;
+            }
+            appState.selectedPatient = patient;
+            
+            // Update patient info
+            document.getElementById('triagePatientInfo').innerHTML = `
+                Patient: ${patient.patient_id} | ${patient.age}yo ${patient.sex} | ${getArrivalIcon(patient.arrival_mode)} ${patient.arrival_mode}
+            `;
+            
+            // Update vitals display
+            const vitals = patient.vitals;
+            document.getElementById('vitalsDisplay').innerHTML = `
+                <div class="grid grid-cols-2 gap-2">
+                    <div>❤️ Heart Rate <span class="${getVitalClass('heart_rate', vitals.heart_rate, patient.age)}">${vitals.heart_rate} bpm</span> ${getVitalStatus('heart_rate', vitals.heart_rate, patient.age)}</div>
+                    <div>🩸 Systolic BP <span class="${getVitalClass('bp_systolic', vitals.bp_systolic, patient.age)}">${vitals.bp_systolic} mmHg</span> ${getVitalStatus('bp_systolic', vitals.bp_systolic, patient.age)}</div>
+                    <div>🩸 Diastolic BP <span class="${getVitalClass('bp_diastolic', vitals.bp_diastolic, patient.age)}">${vitals.bp_diastolic} mmHg</span></div>
+                    <div>🫁 SpO2 <span class="${getVitalClass('spo2', vitals.spo2, patient.age)}">${vitals.spo2}%</span> ${getVitalStatus('spo2', vitals.spo2, patient.age)}</div>
+                    <div>💨 Resp Rate <span class="${getVitalClass('respiratory_rate', vitals.respiratory_rate, patient.age)}">${vitals.respiratory_rate}/min</span> ${getVitalStatus('respiratory_rate', vitals.respiratory_rate, patient.age)}</div>
+                    <div>🌡️ Temperature <span class="${getVitalClass('temperature', vitals.temperature, patient.age)}">${vitals.temperature}°C</span> ${getVitalStatus('temperature', vitals.temperature, patient.age)}</div>
+                    <div>😣 Pain Score <span class="${getVitalClass('pain_score', vitals.pain_score, patient.age)}">${vitals.pain_score}/10</span> ${getVitalStatus('pain_score', vitals.pain_score, patient.age)}</div>
+                    <div>🧠 GCS <span class="${getVitalClass('gcs', vitals.gcs, patient.age)}">${vitals.gcs}</span> ${getVitalStatus('gcs', vitals.gcs, patient.age)}</div>
+                </div>
+            `;
+            
+            // Update chief complaint
+            document.getElementById('chiefComplaint').textContent = patient.chief_complaint;
+            
+            // Reset selections
+            document.querySelectorAll('.priority-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelectorAll('.bed-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('escalateCheck').checked = false;
+            document.getElementById('reasoningInput').value = '';
+            document.getElementById('submitTriageBtn').disabled = true;
+            
+            // Show panel
+            document.getElementById('triagePanel').classList.add('open');
+        }
+
+        function closeTriagePanel() {
+            document.getElementById('triagePanel').classList.remove('open');
+            appState.selectedPatient = null;
+        }
+
+        function setPriority(priority) {
+            document.querySelectorAll('.priority-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelector(`.priority-btn[data-priority="${priority}"]`).classList.add('selected');
+            checkTriageForm();
+        }
+
+        function setBed(bedType) {
+            document.querySelectorAll('.bed-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelector(`.bed-btn[data-bed="${bedType}"]`).classList.add('selected');
+            checkTriageForm();
+        }
+
+        function checkTriageForm() {
+            const priority = document.querySelector('.priority-btn.selected');
+            const bed = document.querySelector('.bed-btn.selected');
+            const canSubmit = priority && bed && appState.selectedPatient;
+            document.getElementById('submitTriageBtn').disabled = !canSubmit;
+        }
+
+        function triageRegisteredPatient(patientId) {
+            // For registered patients, use local scoring
+            const patient = patientsMap[patientId];
+            if (!patient) {
+                console.error('Registered patient not found:', patientId);
+                return;
+            }
+            
+            appState.selectedPatient = patient;
+            openTriagePanel(patientId);
+        }
+
+        async function submitHumanTriage() {
+            const priorityBtn = document.querySelector('.priority-btn.selected');
+            const bedBtn = document.querySelector('.bed-btn.selected');
+            
+            if (!priorityBtn || !bedBtn) {
+                showToast('Select priority and bed type first', 'warning');
+                return;
+            }
+            if (!appState.selectedPatient) {
+                showToast('No patient selected', 'error');
+                return;
+            }
+            
+            const priority = parseInt(priorityBtn.dataset.priority);
+            const bedType = bedBtn.dataset.bed;
+            const escalate = document.getElementById('escalateCheck')?.checked || false;
+            const notes = document.getElementById('reasoningInput')?.value || '';
+            
+            const action = {
+                patient_id: appState.selectedPatient.patient_id,
+                priority: priority,
+                bed_type: bedType,
+                escalate: escalate,
+                reasoning: notes || 'Human triage decision'
+            };
+            
+            // Check if this is a registered patient (local scoring)
+            if (appState.selectedPatient.registered) {
+                // Use local scoring for registered patients
+                const correctESI = appState.selectedPatient.correctESI;
+                const score = localCalculateScore(action.priority, correctESI, action.bed_type, action.escalate);
+                
+                // Show feedback
+                showFeedback(score, action.priority);
+                
+                // Remove patient from registered list
+                appState.registeredPatients = appState.registeredPatients.filter(p => p.patient_id !== action.patient_id);
+                delete patientsMap[action.patient_id];
+                
+                // Update UI
+                renderPatientQueue([]);
+                closeTriagePanel();
+                
+                showToast(`Local triage completed: Score ${score.toFixed(2)}`, 'success');
+            } else {
+                // Use backend API for normal patients
+                const result = await submitStep(action);
+                if (!result) return;
+                
+                // DEBUG - log everything
+                console.log('=== TRIAGE SUBMITTED ===');
+                console.log('result.done:', result.done);
+                console.log('patients_triaged:', result.observation?.patients_triaged);
+                console.log('total_patients:', result.observation?.total_patients);
+                console.log('patients_waiting:', result.observation?.patients_waiting?.length);
+                console.log('episode_done:', result.observation?.episode_done);
+                console.log('========================');
+                
+                showFeedback(result.reward, appState.selectedPatient);
+                closeTriagePanel();
+                appState.selectedPatient = null;
+                updateAllUI(result);
+                
+                // ONLY show modal when truly ALL patients done
+                const triaged = result.observation?.patients_triaged || 0;
+                const total = result.observation?.total_patients || 1;
+                const waiting = result.observation?.patients_waiting?.length || 0;
+                const isDone = result.done === true;
+                
+                console.log('isDone:', isDone, 'triaged/total:', triaged+'/'+total, 
+                            'waiting:', waiting);
+                
+                if (isDone && triaged >= total) {
+                    console.log('SHOWING EPISODE COMPLETE');
+                    setTimeout(() => showEpisodeComplete(result.observation), 800);
+                }
+            }
+        }
+
+        function getCorrectAnswerFromExplanation(explanation) {
+            if (!explanation) return '';
+            
+            // Extract truth ESI level
+            const truthMatch = explanation.match(/truth=(\d)/);
+            const truthESI = truthMatch ? truthMatch[1] : '?';
+            
+            // Map ESI to bed
+            const correctBed = {
+                '1': 'Resus', '2': 'Acute', 
+                '3': 'Acute/Minor', '4': 'Minor', '5': 'Waiting'
+            };
+            
+            return 'Correct: ESI-' + truthESI + ' + ' + 
+                   (correctBed[truthESI] || 'appropriate bed');
+        }
+
+        function showFeedback(reward, patient) {
+            if (!reward) return;
+            
+            console.log('showFeedback called with reward:', reward);
+            
+            const total = parseFloat(reward.total) || 0;
+            const penalty = parseFloat(reward.penalty) || 0;
+            const explanation = reward.explanation || '';
+            
+            let title, message, type, duration;
+            
+            if (penalty <= -0.50) {
+                // Fatal miss - P1 as P4
+                title = '❌ FATAL ERROR!';
+                message = getCorrectAnswerFromExplanation(explanation);
+                type = 'danger';
+                duration = 5000;
+            } else if (penalty <= -0.30) {
+                // Dangerous undertriage - P1 as P3
+                title = '⚠️ DANGEROUS UNDERTRIAGE!';
+                message = getCorrectAnswerFromExplanation(explanation);
+                type = 'danger';
+                duration = 5000;
+            } else if (total >= 0.90) {
+                title = '✅ EXCELLENT! +' + total.toFixed(2);
+                message = 'Correct ESI triage';
+                type = 'success';
+                duration = 2000;
+            } else if (total >= 0.70) {
+                title = '✓ GOOD +' + total.toFixed(2);
+                message = 'Mostly correct triage';
+                type = 'success';
+                duration = 2000;
+            } else if (total >= 0.50) {
+                title = '⚠️ FAIR +' + total.toFixed(2);
+                message = 'Priority correct but bed could be better';
+                type = 'warning';
+                duration = 3000;
+            } else if (total >= 0) {
+                title = '⚠️ POOR +' + total.toFixed(2);
+                message = 'Priority or bed assignment incorrect';
+                type = 'warning';
+                duration = 3000;
+            } else {
+                title = '❌ WRONG! ' + total.toFixed(2);
+                message = 'Incorrect triage decision';
+                type = 'error';
+                duration = 3000;
+            }
+            
+            showToast(title, message, type, duration);
+        }
+
+        // ── PATIENT REGISTRATION ─────────────────────────────
+        function openRegistrationModal() {
+            document.getElementById('registrationModal').classList.add('open');
+            // Clear form
+            document.getElementById('regName').value = '';
+            document.getElementById('regAge').value = '';
+            document.getElementById('regComplaint').value = '';
+            clearVitals();
+        }
+
+        function closeRegistrationModal() {
+            document.getElementById('registrationModal').classList.remove('open');
+        }
+
+        function clearVitals() {
+            document.getElementById('regHR').value = '';
+            document.getElementById('regSBP').value = '';
+            document.getElementById('regDBP').value = '';
+            document.getElementById('regSpO2').value = '';
+            document.getElementById('regRR').value = '';
+            document.getElementById('regTemp').value = '';
+            document.getElementById('regGCS').value = '';
+            document.querySelectorAll('.pain-btn').forEach(btn => btn.classList.remove('bg-blue-600'));
+        }
+
+        function setPain(score) {
+            document.querySelectorAll('.pain-btn').forEach(btn => btn.classList.remove('bg-blue-600'));
+            document.querySelectorAll('.pain-btn')[score].classList.add('bg-blue-600');
+            document.getElementById('regPain') = score;
+            updateLiveESIPreview();
+        }
+
+        function quickFill(preset) {
+            const presets = {
+                stemi: {
+                    complaint: 'Crushing chest pain radiating to left arm, diaphoresis',
+                    hr: 118, sbp: 86, dbp: 58, spo2: 91, rr: 22, temp: 37.3, gcs: 15, pain: 9, age: 67
+                },
+                asthma: {
+                    complaint: 'Severe shortness of breath, wheezing, unable to speak full sentences',
+                    hr: 135, sbp: 145, dbp: 85, spo2: 84, rr: 35, temp: 37.0, gcs: 14, pain: 3, age: 32
+                },
+                stroke: {
+                    complaint: 'Sudden onset right-sided weakness, facial droop, slurred speech',
+                    hr: 95, sbp: 165, dbp: 95, spo2: 96, rr: 16, temp: 37.1, gcs: 12, pain: 2, age: 71
+                },
+                trauma: {
+                    complaint: 'Motor vehicle collision, abdominal pain, altered mental status',
+                    hr: 125, sbp: 75, dbp: 45, spo2: 88, rr: 28, temp: 36.8, gcs: 8, pain: 8, age: 45
+                },
+                sepsis: {
+                    complaint: 'Fever, chills, confusion, low blood pressure',
+                    hr: 142, sbp: 78, dbp: 48, spo2: 89, rr: 26, temp: 40.2, gcs: 13, pain: 4, age: 58
+                },
+                injury: {
+                    complaint: 'Ankle sprain from fall, moderate pain, ambulatory',
+                    hr: 88, sbp: 125, dbp: 78, spo2: 98, rr: 16, temp: 37.0, gcs: 15, pain: 6, age: 25
+                }
+            };
+            
+            const p = presets[preset];
+            if (p) {
+                document.getElementById('regComplaint').value = p.complaint;
+                document.getElementById('regHR').value = p.hr;
+                document.getElementById('regSBP').value = p.sbp;
+                document.getElementById('regDBP').value = p.dbp;
+                document.getElementById('regSpO2').value = p.spo2;
+                document.getElementById('regRR').value = p.rr;
+                document.getElementById('regTemp').value = p.temp;
+                document.getElementById('regGCS').value = p.gcs;
+                setPain(p.pain);
+                document.getElementById('regAge').value = p.age;
+                updateLiveESIPreview();
+            }
+        }
+
+        function updateLiveESIPreview() {
+            const vitals = {
+                heart_rate: parseInt(document.getElementById('regHR').value) || 70,
+                bp_systolic: parseInt(document.getElementById('regSBP').value) || 120,
+                bp_diastolic: parseInt(document.getElementById('regDBP').value) || 80,
+                spo2: parseInt(document.getElementById('regSpO2').value) || 98,
+                respiratory_rate: parseInt(document.getElementById('regRR').value) || 16,
+                temperature: parseFloat(document.getElementById('regTemp').value) || 37.0,
+                pain_score: parseInt(document.getElementById('regPain')) || 0,
+                gcs: parseInt(document.getElementById('regGCS').value) || 15
+            };
+            
+            const age = parseInt(document.getElementById('regAge').value) || 30;
+            const esi = localCalculateESI(vitals, age);
+            
+            const esiLabels = ['', 'ESI-1 IMMEDIATE', 'ESI-2 EMERGENCY', 'ESI-3 URGENT', 'ESI-4 LESS URGENT', 'ESI-5 NON-URGENT'];
+            const esiColors = ['', 'var(--p1)', 'var(--p2)', 'var(--p3)', 'var(--p4)', 'var(--success)'];
+            
+            document.getElementById('esiPreview').textContent = esiLabels[esi];
+            document.getElementById('esiPreview').style.color = esiColors[esi];
+            
+            // Add explanation
+            let explanation = 'Key finding: ';
+            if (vitals.spo2 <= 85) explanation += `SpO2 ${vitals.spo2}% triggers ESI-1 threshold`;
+            else if (vitals.gcs <= 8) explanation += `GCS ${vitals.gcs} triggers ESI-1 threshold`;
+            else if (vitals.bp_systolic < 80 && age >= 18) explanation += `SBP ${vitals.bp_systolic} triggers ESI-1 threshold`;
+            else if (vitals.heart_rate > 150) explanation += `HR ${vitals.heart_rate} triggers ESI-1 threshold`;
+            else if (vitals.spo2 <= 92) explanation += `SpO2 ${vitals.spo2}% triggers ESI-2 threshold`;
+            else if (vitals.gcs <= 13) explanation += `GCS ${vitals.gcs} triggers ESI-2 threshold`;
+            else if (vitals.bp_systolic <= 100 && age >= 18) explanation += `SBP ${vitals.bp_systolic} triggers ESI-2 threshold`;
+            else if (vitals.heart_rate >= 120) explanation += `HR ${vitals.heart_rate} triggers ESI-2 threshold`;
+            else if (vitals.temperature > 39.5) explanation += `Temp ${vitals.temperature}°C triggers ESI-2 threshold`;
+            else explanation += 'Vitals within normal ranges';
+            
+            document.getElementById('esiExplanation').textContent = explanation;
+        }
+
+        function submitRegistration() {
+            const name = document.getElementById('regName').value || 'Registered Patient';
+            const age = parseInt(document.getElementById('regAge').value) || 30;
+            const sex = document.querySelector('input[name="sex"]:checked').value;
+            const arrival = document.getElementById('regArrival').value;
+            const complaint = document.getElementById('regComplaint').value || 'General complaint';
+            
+            const vitals = {
+                heart_rate: parseInt(document.getElementById('regHR').value) || 70,
+                bp_systolic: parseInt(document.getElementById('regSBP').value) || 120,
+                bp_diastolic: parseInt(document.getElementById('regDBP').value) || 80,
+                spo2: parseInt(document.getElementById('regSpO2').value) || 98,
+                respiratory_rate: parseInt(document.getElementById('regRR').value) || 16,
+                temperature: parseFloat(document.getElementById('regTemp').value) || 37.0,
+                pain_score: parseInt(document.getElementById('regPain')) || 0,
+                gcs: parseInt(document.getElementById('regGCS').value) || 15
+            };
+            
+            const patient = {
+                patient_id: `REG${Date.now()}`,
+                name: name,
+                age: age,
+                sex: sex,
+                arrival_mode: arrival,
+                chief_complaint: complaint,
+                vitals: vitals,
+                waiting_minutes: 0,
+                active_alerts: [],
+                registered: true
+            };
+            
+            // Calculate local ESI and score
+            const correctESI = localCalculateESI(vitals, age);
+            patient.correctESI = correctESI;
+            
+            appState.registeredPatients.push(patient);
+            renderRegisteredPatients();
+            closeRegistrationModal();
+            
+            showToast(`Patient ${patient.patient_id} registered successfully`, 'success');
+        }
+
+        function localCalculateESI(vitals, age) {
+            const v = vitals;
+            
+            // ESI-1: Immediate life threats
+            if (v.spo2 <= 85 || v.gcs <= 8 ||
+                (v.bp_systolic < 80 && age >= 18) ||
+                v.heart_rate > 150) {
+                return 1;
+            }
+            
+            // ESI-2: High risk
+            if (v.spo2 <= 92 || v.gcs <= 13 ||
+                (v.bp_systolic <= 100 && age >= 18) ||
+                v.heart_rate >= 120 || v.temperature > 39.5) {
+                return 2;
+            }
+            
+            // Count abnormal vitals
+            let abnormalCount = 0;
+            if (v.spo2 < 96) abnormalCount++;
+            if (v.heart_rate > 100 || v.heart_rate < 55) abnormalCount++;
+            if (v.temperature > 38.5) abnormalCount++;
+            if (v.pain_score >= 5) abnormalCount++;
+            
+            if (abnormalCount >= 2) return 3;
+            if (abnormalCount === 1) return 4;
+            return 5;
+        }
+
+        function localCalculateScore(userPriority, correctESI, bedType, escalate) {
+            const PRIORITY_SCORES = [0.50, 0.50, 0.25, 0.10, 0.0];
+            const CORRECT_BED = {1: 'resus', 2: 'acute', 3: 'acute', 4: 'minor', 5: 'waiting_area'};
+            
+            const delta = Math.abs(userPriority - correctESI);
+            let score = PRIORITY_SCORES[Math.min(delta, 4)];
+            
+            if (bedType === CORRECT_BED[correctESI]) score += 0.30;
+            else if (delta <= 1) score += 0.10;
+            
+            if (escalate === (correctESI <= 2)) score += 0.20;
+            
+            if (correctESI === 1 && userPriority === 5) score -= 0.50;
+            else if (correctESI === 1 && userPriority >= 4) score -= 0.30;
+            
+            return Math.max(-1.0, Math.min(1.0, score));
+        }
+
+        // ── UI RENDERING ─────────────────────────────────────
+        function renderPatientQueue(patients) {
+            const queue = document.getElementById('patientQueue');
+            
+            // ALWAYS update patientsMap when rendering
+            if (!appState.patientsMap) appState.patientsMap = {};
+            
+            // Clear and update both maps
+            patientsMap = {};
+            appState.patientsMap = {};
+            
+            if (patients.length === 0 && appState.registeredPatients.length === 0) {
+                queue.innerHTML = '<div class="text-center text-gray-400 py-8">No patients waiting</div>';
+                document.getElementById('emptyState').classList.remove('hidden');
+            } else {
+                document.getElementById('emptyState').classList.add('hidden');
+                let html = '';
+                
+                // Backend patients
+                patients.forEach(patient => {
+                    patientsMap[patient.patient_id] = patient;
+                    appState.patientsMap[patient.patient_id] = patient;
+                    html += renderPatientCard(patient);
+                });
+                
+                // Registered patients
+                appState.registeredPatients.forEach(patient => {
+                    patientsMap[patient.patient_id] = patient;
+                    appState.patientsMap[patient.patient_id] = patient;
+                    html += renderPatientCard(patient, true);
+                });
+                
+                queue.innerHTML = html;
+            }
+            
+            document.getElementById('waitingCount').textContent = `${patients.length + appState.registeredPatients.length} waiting`;
+        }
+
+        function renderPatientCard(patient, isRegistered = false) {
+            const v = patient.vitals;
+            const waitingClass = patient.waiting_minutes > 20 ? 'border-l-4 border-l-orange-500' : 
+                                patient.waiting_minutes > 10 ? 'border-l-4 border-l-yellow-500' : '';
+            const alertClass = patient.active_alerts.length > 0 ? 'border-red-500' : '';
+            const registeredClass = isRegistered ? 'border-purple-500' : '';
+            
+            return `
+                <div class="patient-card ${waitingClass} ${alertClass} ${registeredClass}" 
+                     onclick="selectPatient('${patient.patient_id}')">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold">${getArrivalIcon(patient.arrival_mode)} ${patient.patient_id}</span>
+                            ${isRegistered ? '<span class="bg-purple-600 px-2 py-1 rounded text-xs">📋 MANUAL ENTRY</span>' : '<span class="bg-gray-600 px-2 py-1 rounded text-xs">? UNASSIGNED</span>'}
+                        </div>
+                        <span class="text-sm text-gray-400">⏳ ${formatTime(patient.waiting_minutes)} waiting</span>
+                    </div>
+                    
+                    <div class="border-t border-b border-gray-600 py-2 my-2">
+                        <div class="text-sm italic">"${patient.chief_complaint}"</div>
+                    </div>
+                    
+                    <div class="grid grid-cols-4 gap-2 text-xs">
+                        <div>❤️ ${v.heart_rate}bpm</div>
+                        <div>🩸 ${v.bp_systolic}/${v.bp_diastolic}</div>
+                        <div>🫁 ${v.spo2}%</div>
+                        <div>🧠 GCS:${v.gcs}</div>
+                        <div>🌡️ ${v.temperature}°C</div>
+                        <div>💨 ${v.respiratory_rate}/m</div>
+                        <div>😣 ${v.pain_score}/10</div>
+                        <div>👤 ${patient.age}yo ${patient.sex}</div>
+                    </div>
+                    
+                    ${patient.active_alerts.length > 0 ? `
+                        <div class="mt-2 text-xs text-red-400">
+                            ⚠️ ${patient.active_alerts.join(' — ')}
+                        </div>
+                    ` : ''}
+                    
+                    ${appState.mode === 'human' && !isRegistered ? `
+                        <button class="mt-2 bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm w-full" onclick="event.stopPropagation(); openTriagePanel('${patient.patient_id}')">
+                            TRIAGE THIS PATIENT →
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function renderBedBoard(beds) {
+            const resusBeds = beds.filter(b => b.bed_type === 'resus');
+            const acuteBeds = beds.filter(b => b.bed_type === 'acute');
+            const minorBeds = beds.filter(b => b.bed_type === 'minor');
+            
+            console.log('Beds received:', beds.length);
+            console.log('Resus:', resusBeds.length, 'occupied:', 
+                resusBeds.filter(b=>b.occupied).length);
+            console.log('Acute:', acuteBeds.length, 'occupied:',
+                acuteBeds.filter(b=>b.occupied).length);
+            console.log('Minor:', minorBeds.length, 'occupied:',
+                minorBeds.filter(b=>b.occupied).length);
+            
+            // Render bed sections
+            document.getElementById('resusGrid').innerHTML = renderBedTiles(resusBeds, 'resus');
+            document.getElementById('acuteGrid').innerHTML = renderBedTiles(acuteBeds, 'acute');
+            document.getElementById('minorGrid').innerHTML = renderBedTiles(minorBeds, 'minor');
+            
+            // Update counts
+            const resusOccupied = resusBeds.filter(b => b.occupied).length;
+            const acuteOccupied = acuteBeds.filter(b => b.occupied).length;
+            const minorOccupied = minorBeds.filter(b => b.occupied).length;
+            
+            document.getElementById('resusCount').textContent = resusOccupied;
+            document.getElementById('acuteCount').textContent = acuteOccupied;
+            document.getElementById('minorCount').textContent = minorOccupied;
+            
+            // Update occupancy bars with protection against negative values
+            const resusEmpty = Math.max(0, 5 - resusOccupied);
+            const acuteEmpty = Math.max(0, 8 - acuteOccupied);
+            const minorEmpty = Math.max(0, 10 - minorOccupied);
+            
+            document.getElementById('resusBar').innerHTML = '█'.repeat(resusOccupied) + '░'.repeat(resusEmpty);
+            document.getElementById('resusPercent').textContent = resusOccupied;
+            document.getElementById('acuteBar').innerHTML = '█'.repeat(acuteOccupied) + '░'.repeat(acuteEmpty);
+            document.getElementById('acutePercent').textContent = acuteOccupied;
+            document.getElementById('minorBar').innerHTML = '█'.repeat(minorOccupied) + '░'.repeat(minorEmpty);
+            document.getElementById('minorPercent').textContent = minorOccupied;
+        }
+
+        function renderBedTiles(beds, type) {
+            return beds.map(bed => `
+                <div class="bed-tile ${bed.occupied ? `occupied ${type}` : ''}">
+                    ${bed.occupied ? bed.patient_id : 'EMPTY'}
+                </div>
+            `).join('');
+        }
+
+        function renderMetricsRow(state, metrics) {
+            if (!state) return;
+            
+            // Episode Score
+            const score = safeFixed(state.patients_triaged > 0 ? state.cumulative_reward / state.patients_triaged : 0);
+            safeSetText('episodeScore', score);
+            const scoreNum = parseFloat(score);
+            const scoreEl = document.getElementById('episodeScore');
+            if (scoreEl) {
+                scoreEl.style.color = scoreNum >= 0.6 ? 'var(--success)' : scoreNum >= 0.3 ? 'var(--warning)' : 'var(--danger)';
+            }
+            const scoreProgressEl = document.getElementById('scoreProgress');
+            if (scoreProgressEl) {
+                scoreProgressEl.style.width = `${scoreNum * 100}%`;
+            }
+            
+            // Patients Count
+            const triaged = safeInt(state.patients_triaged);
+            const total = safeInt(state.total_patients);
+            safeSetText('patientsCount', `${triaged}/${total}`);
+            const patientProgress = total > 0 ? (triaged / total) : 0;
+            const patientsProgressEl = document.getElementById('patientsProgress');
+            if (patientsProgressEl) {
+                patientsProgressEl.style.width = `${patientProgress * 100}%`;
+            }
+            
+            // Simulation Time
+            safeSetText('simTime', formatTime(state.shift_time || 0));
+            
+            // Dangerous Errors
+            const dangerous = metrics ? safeInt(metrics.dangerous_errors) : 0;
+            safeSetText('dangerousErrors', dangerous);
+            const dangerEl = document.getElementById('dangerousErrors');
+            if (dangerEl) {
+                dangerEl.style.color = dangerous > 0 ? 'var(--danger)' : 'var(--success)';
+            }
+            
+            // Perfect Actions
+            const perfect = metrics ? safeInt(metrics.perfect_actions) : 0;
+            safeSetText('perfectActions', perfect);
+            
+            // Mean Reward
+            const meanReward = metrics ? safeFixed(metrics.mean_reward) : '0.00';
+            safeSetText('meanReward', meanReward);
+            const meanNum = parseFloat(meanReward);
+            const meanEl = document.getElementById('meanReward');
+            if (meanEl) {
+                meanEl.style.color = meanNum >= 0.6 ? 'var(--success)' : meanNum >= 0.3 ? 'var(--warning)' : 'var(--danger)';
+            }
+        }
+
+        function renderActionLog() {
+            const log = document.getElementById('actionLog');
+            const count = document.getElementById('logCount');
+            
+            if (!log || !count) return;
+            
+            const actionLog = appState.actionLog || [];
+            count.textContent = `(${actionLog.length})`;
+            
+            if (actionLog.length === 0) {
+                log.innerHTML = '<div class="text-gray-400">No actions yet...</div>';
+                return;
+            }
+            
+            // Render entries newest first
+            const html = [...actionLog].reverse().map(entry => {
+                // Handle reset/start entries
+                if (entry.isReset) {
+                    return '<div style="color:#3b82f6;font-family:monospace;' +
+                           'font-size:12px;padding:4px 0;">' +
+                           '▶ Episode started: ' + (entry.taskId || '') +
+                           '</div>';
+                }
+                
+                if (entry.type === 'start') {
+                    return '<div style="color:#a855f7;font-family:monospace;' +
+                           'font-size:12px;padding:4px 0;">' +
+                           entry.action +
+                           '</div>';
+                }
+                
+                // Format time as MM:SS
+                const t = entry.shiftTime || 0;
+                const mins = String(Math.floor(t)).padStart(2, '0');
+                const secs = String(Math.round((t - Math.floor(t)) * 60)).padStart(2, '0');
+                const timeStr = mins + ':' + secs;
+                
+                const pid = entry.patientId || '???';
+                const priority = entry.priority || '?';
+                const bed = entry.bedType || '???';
+                const escalate = entry.escalate ? '↑' : '';
+                const total = entry.reward?.total || 0;
+                const rewardStr = (total >= 0 ? '+' : '') + 
+                                  parseFloat(total).toFixed(2);
+                
+                // Color based on reward
+                let className = 'text-gray-400';
+                if (total >= 0.8) className = 'text-green-400';
+                else if (total >= 0.5) className = 'text-yellow-400';
+                else if (total >= 0.2) className = 'text-orange-400';
+                else className = 'text-red-400';
+                
+                const icon = total >= 0.8 ? '✅' 
+                    : total >= 0.5 ? '⚠️' 
+                    : '❌';
+                
+                return '<div class="' + className + '" style="font-family:monospace;font-size:12px;padding:4px 0;">' +
+                       '[' + timeStr + '] ' + pid + 
+                       ' → ESI-' + priority + 
+                       ' | ' + bed + 
+                       (escalate ? ' | ↑' : '') + 
+                       ' | ' + rewardStr + ' ' + icon +
+                       '</div>';
+            }).join('');
+            
+            log.innerHTML = html;
+            
+            // Auto-scroll to top
+            log.scrollTop = 0;
+        }
+
+        function renderRewardBars(reward) {
+            if (!reward) return;
+            
+            const priority = parseFloat(reward.priority_accuracy) || 0;
+            const bed = parseFloat(reward.bed_assignment) || 0;
+            const esc = parseFloat(reward.escalation_timing) || 0;
+            const penalty = Math.abs(parseFloat(reward.penalty) || 0);
+            const total = parseFloat(reward.total) || 0;
+            
+            console.log('renderRewardBars:', {priority, bed, esc, penalty, total});
+            
+            // Hide "No actions yet" placeholder
+            const placeholder = document.getElementById('lastActionContent');
+            if (placeholder) {
+                placeholder.innerHTML = '';
+            }
+            
+            // Update each bar with CORRECT IDs
+            function updateBar(barId, value, maxVal, textId) {
+                const bar = document.getElementById(barId);
+                const text = document.getElementById(textId);
+                const pct = Math.min(100, Math.max(0, (value/maxVal)*100));
+                if (bar) {
+                    bar.style.width = pct + '%';
+                    bar.style.minWidth = pct > 0 ? '4px' : '0';
+                }
+                if (text) text.textContent = value.toFixed(2) + ' / ' + maxVal.toFixed(2);
+            }
+            
+            // Use the EXACT IDs from HTML
+            updateBar('priorityBar', priority, 0.50, 'priorityValue');
+            updateBar('bedBar', bed, 0.30, 'bedValue');
+            updateBar('escalationBar', esc, 0.20, 'escValue');
+            updateBar('penaltyBar', penalty, 0.50, 'penaltyValue');
+            
+            // Update total
+            const totalEl = document.getElementById('totalReward');
+            if (totalEl) {
+                totalEl.textContent = (total >= 0 ? '+' : '') + total.toFixed(2);
+                totalEl.style.color = total >= 0.7 ? '#22c55e'
+                    : total >= 0.4 ? '#eab308' : '#ef4444';
+            }
+            
+            // Show reward bars container
+            const barsContainer = document.getElementById('rewardBars');
+            if (barsContainer) barsContainer.classList.remove('hidden');
+            
+            // Show last action info
+            if (appState.lastAction) {
+                const patient = (appState.patientsMap || {})[appState.lastAction.patient_id];
+                if (patient) {
+                    const contentEl = document.getElementById('lastActionContent');
+                    if (contentEl) {
+                        contentEl.innerHTML = `
+                            <div class="mb-2">
+                                <div class="font-semibold">Patient: ${patient.patient_id} (${patient.age}yo ${patient.sex})</div>
+                                <div>Decision: ESI-${appState.lastAction.priority} | ${appState.lastAction.bed_type} | ${appState.lastAction.escalate ? '↑ Escalated' : ''}</div>
+                            </div>
+                        `;
+                    }
+                }
+            }
+        }
+
+        function setBar(barId, value, maxValue) {
+            const bar = document.getElementById(barId);
+            if (bar) {
+                const pct = Math.min(100, Math.max(0, (value / maxValue) * 100));
+                bar.style.width = pct + '%';
+            }
+        }
+
+        function renderRegisteredPatients() {
+            // This will be called when registered patients are added
+            if (appState.episodeData) {
+                renderPatientQueue(appState.episodeData.patients_waiting);
+            }
+        }
+
+        function updateAllUI(stepResult = null) {
+            if (!stepResult) return;
+            
+            const state = stepResult.observation;
+            const reward = stepResult.reward;
+            
+            if (state) {
+                renderPatientQueue(state.patients_waiting || []);
+                renderBedBoard(state.beds || []);
+                renderMetricsRow(state, appState.metrics);
+            }
+            
+            if (reward) {
+                renderRewardBars(reward);
+                appState.lastReward = reward;
+            }
+            
+            // Do NOT call showEpisodeComplete here
+            // It is called explicitly with setTimeout in submitHumanTriage and runAIStep
+            // if (stepResult && stepResult.done) {
+            //     showEpisodeComplete(state);
+            // Do NOT call renderActionLog here - it's called in submitStep
+            // renderActionLog();
+        }
+
+        function flashCard(patientId, color) {
+            const card = document.querySelector(`[onclick*="${patientId}"]`);
+            if (card) {
+                card.classList.add(`flash-${color}`);
+                setTimeout(() => card.classList.remove(`flash-${color}`), 600);
+            }
+        }
+
+        function removeCard(patientId) {
+            const card = document.querySelector(`[onclick*="${patientId}"]`);
+            if (card) {
+                card.classList.add('fade-out');
+                setTimeout(() => {
+                    if (appState.episodeData) {
+                        renderPatientQueue(appState.episodeData.patients_waiting);
+                    }
+                }, 300);
+            }
+        }
+
+        function showToast(title, message = '', type = 'info', duration = 3000) {
+            const toast = document.getElementById('toast');
+            const content = document.getElementById('toastContent');
+            const titleEl = content.querySelector('.toast-title');
+            const messageEl = content.querySelector('.toast-message');
+            
+            toast.className = `toast ${type}`;
+            
+            if (titleEl) titleEl.textContent = title;
+            if (messageEl) messageEl.textContent = message;
+            
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
+        }
+
+        function animateRewardBars(reward) {
+            // Animate the reward bars filling up
+            setTimeout(() => updateRewardBar('priorityBar', reward.priority_accuracy, 0.50), 100);
+            setTimeout(() => updateRewardBar('bedBar', reward.bed_assignment, 0.30), 200);
+            setTimeout(() => updateRewardBar('escalationBar', reward.escalation_timing, 0.20), 300);
+            setTimeout(() => updateRewardBar('penaltyBar', Math.abs(reward.penalty), 0.00), 400);
+        }
+
+        function pulseMetricCard(cardId) {
+            const card = document.getElementById(cardId);
+            if (card) {
+                card.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    card.style.transform = 'scale(1)';
+                }, 200);
+            }
+        }
+
+        function animateNumber(element, from, to, duration = 500) {
+            const start = performance.now();
+            const diff = to - from;
+            
+            function update(currentTime) {
+                const elapsed = currentTime - start;
+                const progress = Math.min(elapsed / duration, 1);
+                const current = from + (diff * progress);
+                
+                element.textContent = current.toFixed(2);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+
+        // ── VITALS HELPERS ───────────────────────────────────
+        function vitalStatus(type, value, age) {
+            if (type === 'spo2') {
+                if (value <= 85) return 'critical';
+                if (value <= 92) return 'warning';
+                if (value < 96) return 'caution';
+                return 'normal';
+            }
+            if (type === 'gcs') {
+                if (value <= 8) return 'critical';
+                if (value <= 13) return 'warning';
+                return 'normal';
+            }
+            if (type === 'bp_systolic') {
+                if (value < 80 && age >= 18) return 'critical';
+                if (value < 100) return 'warning';
+                return 'normal';
+            }
+            if (type === 'heart_rate') {
+                if (value > 150) return 'critical';
+                if (value >= 120) return 'warning';
+                return 'normal';
+            }
+            if (type === 'temperature') {
+                if (value > 39.5) return 'critical';
+                if (value > 38.5) return 'warning';
+                return 'normal';
+            }
+            return 'normal';
+        }
+
+        function vitalColor(status) {
+            const colors = {
+                critical: 'var(--danger)',
+                warning: 'var(--p2)',
+                caution: 'var(--p3)',
+                normal: 'var(--success)'
+            };
+            return colors[status] || 'var(--text-primary)';
+        }
+
+        function getVitalClass(type, value, age) {
+            const status = vitalStatus(type, value, age);
+            return `vital-${status}`;
+        }
+
+        function getVitalStatus(type, value, age) {
+            const status = vitalStatus(type, value, age);
+            if (status === 'critical') return '🔴 CRITICAL';
+            if (status === 'warning') return '⚠️ HIGH';
+            if (status === 'caution') return '⚠️ LOW';
+            return '✓ NORMAL';
+        }
+
+        function formatVital(type, value) {
+            const units = {
+                heart_rate: 'bpm',
+                bp_systolic: 'mmHg',
+                bp_diastolic: 'mmHg',
+                spo2: '%',
+                respiratory_rate: '/min',
+                temperature: '°C',
+                pain_score: '/10',
+                gcs: ''
+            };
+            return `${value}${units[type] || ''}`;
+        }
+
+        // ── POLLING ──────────────────────────────────────────
+        function startPolling() {
+            if (appState.pollInterval) return;
+            
+            appState.pollInterval = setInterval(async () => {
+                if (!appState.agentRunning && appState.episodeData && !appState.episodeData.episode_done) {
+                    await getState();
+                    updateAllUI();
+                }
+            }, 2000);
+        }
+
+        function stopPolling() {
+            if (appState.pollInterval) {
+                clearInterval(appState.pollInterval);
+                appState.pollInterval = null;
+            }
+        }
+
+        // ── UTILITIES ────────────────────────────────────────
+        function formatTime(minutes) {
+            if (minutes < 60) {
+                return `${Math.floor(minutes).toString().padStart(2, '0')}:${Math.floor((minutes % 1) * 60).toString().padStart(2, '0')}`;
+            }
+            const hours = Math.floor(minutes / 60);
+            const mins = Math.floor(minutes % 60);
+            return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+        }
+
+        function formatReward(reward) {
+            const sign = reward >= 0 ? '+' : '';
+            return `${sign}${reward.toFixed(2)}`;
+        }
+
+        function getRewardClass(reward) {
+            if (reward >= 0.80) return 'text-green-400';
+            if (reward >= 0.50) return 'text-yellow-400';
+            if (reward >= 0.20) return 'text-orange-400';
+            return 'text-red-400';
+        }
+
+        function taskThreshold(taskId) {
+            return TASK_CONFIG[taskId].passing_score;
+        }
+
+        function taskName(taskId) {
+            return TASK_CONFIG[taskId].name;
+        }
+
+        function getArrivalIcon(mode) {
+            const icons = {
+                ambulance: '🚑',
+                walk_in: '🚶',
+                transfer: '🔄'
+            };
+            return icons[mode] || '🏥';
+        }
+
+        function updateTaskDisplay() {
+            const task = TASK_CONFIG[appState.currentTask];
+            document.getElementById('taskName').textContent = task.name;
+            
+            // Update active tab
+            document.querySelectorAll('.task-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.task === appState.currentTask);
+            });
+        }
+
+        function switchTask(taskId) {
+            console.log('switchTask called with:', taskId);
+            appState.currentTask = taskId;
+            
+            if (appState.agentRunning) stopAgent();
+            appState.actionLog = [];
+            appState.metrics = null;
+            
+            // Update tab UI
+            document.querySelectorAll('.task-tab').forEach(tab => {
+                const tabTask = tab.getAttribute('data-task');
+                tab.classList.toggle('active', tabTask === taskId);
+            });
+            
+            // Update task name display
+            const taskNames = {
+                'task_easy': 'Single Patient Triage',
+                'task_medium': 'Multi-Patient Triage', 
+                'task_hard': 'High-Volume Triage'
+            };
+            safeSetText('taskName', taskNames[taskId] || taskId);
+            
+            resetEpisode(taskId);
+        }
+
+        function updateRewardBar(barId, value, max) {
+            const bar = document.getElementById(barId);
+            const percentage = max > 0 ? (value / max) * 100 : 0;
+            bar.style.width = `${percentage}%`;
+            
+            // Update the text next to the bar
+            const parent = bar.closest('.space-y-2');
+            if (parent) {
+                const label = parent.querySelector('div');
+                if (label) {
+                    label.innerHTML = label.innerHTML.replace(/[\d.]+\/[\d.]+/, `${value.toFixed(2)} / ${max.toFixed(2)}`);
+                }
+            }
+        }
+
+        // ── CONNECTION MONITORING ─────────────────────────────
+        async function startConnectionMonitoring() {
+            const checkConnection = async () => {
+                try {
+                    const response = await fetch(BASE + '/health');
+                    if (response.ok) {
+                        if (appState.connectionStatus !== 'connected') {
+                            appState.connectionStatus = 'connected';
+                            document.getElementById('statusDot').className = 'status-dot connected';
+                            document.getElementById('connectionText').textContent = '● CONNECTED';
+                            showToast('Reconnected to server', 'success', 2000);
+                        }
+                    } else {
+                        throw new Error('Server error');
+                    }
+                } catch (error) {
+                    if (appState.connectionStatus !== 'disconnected') {
+                        appState.connectionStatus = 'disconnected';
+                        document.getElementById('statusDot').className = 'status-dot disconnected';
+                        document.getElementById('connectionText').textContent = '● DISCONNECTED';
+                        showToast('🔴 Disconnected — Retrying...', 'error');
+                    }
+                }
+            };
+            
+            // Check immediately
+            await checkConnection();
+            
+            // Check every 3 seconds
+            setInterval(checkConnection, 3000);
+        }
+
+        // ── EPISODE COMPLETE ACTIONS ─────────────────────────
+        function tryAgain() {
+            const modal = document.getElementById('completeModal');
+            if (modal) modal.classList.remove('open');
+            switchTask(appState.currentTask);
+        }
+
+        function tryHarder() {
+            const idx = getCurrentTaskIndex();
+            console.log('tryHarder: current=', appState.currentTask, 'idx=', idx);
+            
+            if (idx >= TASK_ORDER.length - 1) {
+                showToast('Already on hardest task!', 'warning');
+                return;
+            }
+            const nextTask = TASK_ORDER[idx + 1];
+            console.log('Going to:', nextTask);
+            
+            const modal = document.getElementById('completeModal');
+            if (modal) modal.classList.remove('open');
+            switchTask(nextTask);
+        }
+
+        function tryEasier() {
+            const idx = getCurrentTaskIndex();
+            if (idx <= 0) {
+                showToast('Already on easiest task!', 'warning');
+                return;
+            }
+            const prevTask = TASK_ORDER[idx - 1];
+            
+            const modal = document.getElementById('completeModal');
+            if (modal) modal.classList.remove('open');
+            switchTask(prevTask);
+        }
+
+        function setupDynamicEventListeners() {
+            // Setup event listeners for dynamically created buttons
+            document.addEventListener('click', function(e) {
+                if (e.target.matches('.priority-btn')) {
+                    setPriority(parseInt(e.target.dataset.priority));
+                } else if (e.target.matches('.bed-btn')) {
+                    setBed(e.target.dataset.bed);
+                }
+            });
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            setupDynamicEventListeners();
+            showWelcome();
         });
     </script>
 </body>

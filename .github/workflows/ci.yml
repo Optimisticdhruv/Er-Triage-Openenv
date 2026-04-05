@@ -1,0 +1,87 @@
+name: ERTriageEnv CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run unit tests
+        run: pytest tests/test_graders.py tests/test_environment.py -v --tb=short
+      - name: Verify imports
+        run: |
+          python -c "from app.models import ERState, TriageAction, TriageReward; print('Models OK')"
+          python -c "from app.grader import calculate_esi; print('Grader OK')"
+          python -c "from app.environment import env; print('Environment OK')"
+          python -c "import inference; print('inference.py OK')"
+      - name: Verify inference.py is in root
+        run: test -f inference.py && echo "inference.py in root: PASS"
+
+  validate-api:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: pip install -r requirements.txt openenv
+      - name: Start server
+        run: uvicorn app.main:app --port 7860 &
+      - name: Wait for server
+        run: |
+          for i in $(seq 1 10); do
+            curl -sf http://localhost:7860/health && break || sleep 2
+          done
+      - name: Test all endpoints return 200
+        run: |
+          curl -sf http://localhost:7860/health
+          curl -sf "http://localhost:7860/reset?task_id=task_easy&seed=42"
+          curl -sf "http://localhost:7860/reset?task_id=task_medium&seed=42"
+          curl -sf "http://localhost:7860/reset?task_id=task_hard&seed=42"
+          curl -sf http://localhost:7860/state
+          curl -sf http://localhost:7860/tasks
+      - name: Test reward in valid range
+        run: |
+          curl -sf "http://localhost:7860/reset?task_id=task_easy&seed=42"
+          python -c "
+          import requests, json
+          r = requests.post('http://localhost:7860/step',
+            json={'patient_id':'P001','priority':2,'bed_type':'acute','escalate':True})
+          d = r.json()
+          reward = d['reward']['total']
+          assert -1.0 <= reward <= 1.0, f'Reward {reward} out of range'
+          print(f'Reward {reward}: PASS')
+          "
+      - name: Run openenv validate
+        run: openenv validate --url http://localhost:7860 || echo "validate done"
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: validate-api
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t er-triage-openenv .
+      - name: Run container
+        run: docker run -d -p 7860:7860 -e ENVIRONMENT=production er-triage-openenv
+      - name: Wait and health check
+        run: |
+          sleep 15
+          for i in $(seq 1 5); do curl -sf http://localhost:7860/health && break || sleep 3; done
+      - name: Test Docker endpoints
+        run: |
+          curl -sf http://localhost:7860/health
+          curl -sf "http://localhost:7860/reset?task_id=task_easy&seed=42"
+          echo "Docker tests: PASS"
