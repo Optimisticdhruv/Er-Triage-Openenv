@@ -42,7 +42,7 @@ dev = [
 ]
 
 [project.scripts]
-server = "app.main:app"
+server = "server.app:main"
 
 [project.urls]
 Homepage = "https://huggingface.co/spaces/optimisticdhruv/er-triage-openenv"
