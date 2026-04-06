@@ -25,7 +25,8 @@ jobs:
           python -c "from app.environment import env; print('Environment OK')"
           python -c "import inference; print('inference.py OK')"
       - name: Verify inference.py is in root
-        run: test -f inference.py && echo "inference.py in root: PASS"
+        run: |
+          test -f inference.py && echo "inference.py in root: PASS"
 
   validate-api:
     runs-on: ubuntu-latest
