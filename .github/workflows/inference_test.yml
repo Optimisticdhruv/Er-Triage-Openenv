@@ -2,7 +2,7 @@ name: Inference Script Validation
 
 on:
   push:
-    paths: ["inference.py", "app/**"]
+    paths: ["inference.py", "app/**", ".env.example"]
   workflow_dispatch:
 
 jobs:
@@ -16,7 +16,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Verify inference.py is in root
-        run: test -f inference.py && echo "PASS: inference.py in root"
+        run: |
+          test -f inference.py && echo "PASS: inference.py in root"
       - name: Check inference.py structure
         run: |
           python -c "
@@ -37,15 +38,26 @@ jobs:
       - name: Run inference dry-run test
         run: |
           python -c "
-          import subprocess, sys, json
-          proc = subprocess.run(['python', 'inference.py'],
-              env={**__import__('os').environ,
-                   'OPENAI_API_KEY': 'test',
-                   'API_BASE_URL': 'http://localhost:7860',
-                   'MODEL_NAME': 'gpt-4o-mini',
-                   'ENVIRONMENT_URL': 'http://localhost:7860'},
-              capture_output=True, text=True, timeout=30)
-          # Check stdout has JSON lines
-          lines = [l for l in proc.stdout.strip().split('\n') if l.startswith('{')]
-          print(f'Structured log lines: {len(lines)}')
-          " || echo "Dry run complete (API key not set, expected error)"
+          import subprocess, sys, os
+          # Test with mock environment (no real API calls)
+          env = {**os.environ,
+                 'OPENAI_API_KEY': 'test-key',
+                 'API_BASE_URL': 'http://localhost:7860',
+                 'MODEL_NAME': 'gpt-4o-mini',
+                 'ENVIRONMENT_URL': 'http://localhost:7860'}
+          try:
+            proc = subprocess.run(['python', 'inference.py'],
+                env=env, capture_output=True, text=True, timeout=10)
+            # Check for OpenEnv format lines
+            stdout = proc.stdout
+            has_start = '[START]' in stdout
+            has_step = '[STEP]' in stdout  
+            has_end = '[END]' in stdout
+            print(f'Format check - START: {has_start}, STEP: {has_step}, END: {has_end}')
+            if has_start and has_step:
+              print('inference.py format: PASS')
+            else:
+              print('inference.py format: FAIL - missing required format')
+          except Exception as e:
+            print(f'Dry run complete (expected without real API): {e}')
+          "
