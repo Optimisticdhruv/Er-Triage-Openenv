@@ -77,8 +77,8 @@ def deploy():
             space_sdk="docker", private=False, exist_ok=True)
     upload_files = ["pyproject.toml","inference.py","openenv.yaml",
                     "Dockerfile","requirements.txt","README.md",
-                    ".dockerignore",".env.example"]
-    upload_dirs = ["app","scenarios","static"]
+                    ".dockerignore",".env.example","uv.lock"]
+    upload_dirs = ["app","scenarios","static","server"]
     print("\nUploading files...")
     for fname in upload_files:
         if Path(fname).exists():
