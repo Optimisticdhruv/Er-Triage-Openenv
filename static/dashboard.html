@@ -920,6 +920,7 @@
                         <div>
                             <label class="block text-xs mb-1">Pain Score:</label>
                             <div class="flex gap-1">
+                                <input type="hidden" id="regPain" value="0">
                                 <button onclick="setPain(0)" class="pain-btn bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs flex-1">0</button>
                                 <button onclick="setPain(1)" class="pain-btn bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs flex-1">1</button>
                                 <button onclick="setPain(2)" class="pain-btn bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs flex-1">2</button>
@@ -1474,10 +1475,12 @@
             const state = await stateResp.json();
             
             if (state.episode_done || !state.patients_waiting?.length) {
-                stopAgent();
-                // Do NOT auto-show here - let runAIStep handle it
-                // setTimeout(() => showEpisodeComplete(state), 500);
-                return;
+                // Handle registered patients after backend patients are done
+                await triageRegisteredPatientsAI()
+                if (appState.registeredPatients.length === 0) {
+                    stopAgent()
+                }
+                return
             }
             
             const patient = state.patients_waiting[0];
@@ -1562,6 +1565,54 @@
             
             // ESI-5: Non urgent → waiting area
             return {priority: 4, bed_type: 'waiting_area', escalate: false};
+        }
+
+        async function triageRegisteredPatientsAI() {
+            if (appState.registeredPatients.length === 0) return
+            
+            for (const patient of [...appState.registeredPatients]) {
+                const decision = aiTriage(patient)
+                const score = localCalculateScore(
+                    decision.priority,
+                    patient.correctESI,
+                    decision.bed_type,
+                    decision.escalate
+                )
+                
+                // Add to log
+                appState.actionLog.push({
+                    patientId: patient.patient_id,
+                    priority: decision.priority,
+                    bedType: decision.bed_type,
+                    escalate: decision.escalate,
+                    shiftTime: appState.episodeData?.shift_time || 0,
+                    reward: {
+                        total: score,
+                        priority_accuracy: score * 0.5,
+                        bed_assignment: score * 0.3,
+                        escalation_timing: score * 0.2,
+                        penalty: 0
+                    },
+                    rewardTotal: score
+                })
+                
+                // Remove from registered list
+                appState.registeredPatients = appState.registeredPatients
+                    .filter(p => p.patient_id !== patient.patient_id)
+                delete appState.patientsMap[patient.patient_id]
+                
+                showToast(
+                    'AI triaged ' + patient.patient_id,
+                    'ESI-' + decision.priority + ' | Score: ' + score.toFixed(2),
+                    score >= 0.7 ? 'success' : 'warning',
+                    2000
+                )
+                
+                await new Promise(resolve => setTimeout(resolve, 1000))
+            }
+            
+            renderActionLog()
+            renderPatientQueue(appState.episodeData?.patients_waiting || [])
         }
 
         // ── HUMAN MODE ───────────────────────────────────────
@@ -1680,22 +1731,31 @@
             
             // Check if this is a registered patient (local scoring)
             if (appState.selectedPatient.registered) {
-                // Use local scoring for registered patients
-                const correctESI = appState.selectedPatient.correctESI;
-                const score = localCalculateScore(action.priority, correctESI, action.bed_type, action.escalate);
+                const correctESI = appState.selectedPatient.correctESI
+                const score = localCalculateScore(
+                    priority, correctESI, bedType, escalate)
                 
-                // Show feedback
-                showFeedback(score, action.priority);
+                const correctBed = {
+                    1:'resus', 2:'acute', 3:'acute', 4:'minor', 5:'waiting_area'
+                }
                 
-                // Remove patient from registered list
-                appState.registeredPatients = appState.registeredPatients.filter(p => p.patient_id !== action.patient_id);
-                delete appState.patientsMap[action.patient_id];
+                showToast(
+                    score >= 0.70 ? '✅ CORRECT!' : score >= 0.40 ? '⚠️ PARTIAL' : '❌ WRONG!',
+                    'Your: ESI-' + priority + ' | Correct: ESI-' + correctESI + 
+                    '\nBed: ' + bedType + ' | Correct: ' + correctBed[correctESI] +
+                    '\nScore: ' + score.toFixed(2),
+                    score >= 0.70 ? 'success' : score >= 0.40 ? 'warning' : 'danger',
+                    4000
+                )
                 
-                // Update UI
-                renderPatientQueue([]);
-                closeTriagePanel();
+                appState.registeredPatients = appState.registeredPatients
+                    .filter(p => p.patient_id !== appState.selectedPatient.patient_id)
+                delete appState.patientsMap[appState.selectedPatient.patient_id]
                 
-                showToast(`Local triage completed: Score ${score.toFixed(2)}`, 'success');
+                closeTriagePanel()
+                appState.selectedPatient = null
+                renderPatientQueue(appState.episodeData?.patients_waiting || [])
+                renderActionLog()
             } else {
                 // Use backend API for normal patients
                 const result = await submitStep(action);
@@ -1827,10 +1887,12 @@
         }
 
         function setPain(score) {
-            document.querySelectorAll('.pain-btn').forEach(btn => btn.classList.remove('bg-blue-600'));
-            document.querySelectorAll('.pain-btn')[score].classList.add('bg-blue-600');
-            document.getElementById('regPain') = score;
-            updateLiveESIPreview();
+            document.querySelectorAll('.pain-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'selected')
+            })
+            document.querySelectorAll('.pain-btn')[score].classList.add('bg-blue-600')
+            document.getElementById('regPain').value = score
+            updateLiveESIPreview()
         }
 
         function quickFill(preset) {
@@ -1879,39 +1941,56 @@
 
         function updateLiveESIPreview() {
             const vitals = {
-                heart_rate: parseInt(document.getElementById('regHR').value) || 70,
+                heart_rate: parseInt(document.getElementById('regHR').value) || 80,
                 bp_systolic: parseInt(document.getElementById('regSBP').value) || 120,
                 bp_diastolic: parseInt(document.getElementById('regDBP').value) || 80,
                 spo2: parseInt(document.getElementById('regSpO2').value) || 98,
                 respiratory_rate: parseInt(document.getElementById('regRR').value) || 16,
                 temperature: parseFloat(document.getElementById('regTemp').value) || 37.0,
-                pain_score: parseInt(document.getElementById('regPain')) || 0,
+                pain_score: parseInt(document.getElementById('regPain').value) || 0,
                 gcs: parseInt(document.getElementById('regGCS').value) || 15
-            };
+            }
             
-            const age = parseInt(document.getElementById('regAge').value) || 30;
-            const esi = localCalculateESI(vitals, age);
+            const age = parseInt(document.getElementById('regAge').value) || 30
+            const esi = localCalculateESI(vitals, age)
             
-            const esiLabels = ['', 'ESI-1 IMMEDIATE', 'ESI-2 EMERGENCY', 'ESI-3 URGENT', 'ESI-4 LESS URGENT', 'ESI-5 NON-URGENT'];
-            const esiColors = ['', 'var(--p1)', 'var(--p2)', 'var(--p3)', 'var(--p4)', 'var(--success)'];
+            const esiLabels = {
+                1: 'ESI-1 IMMEDIATE',
+                2: 'ESI-2 EMERGENT', 
+                3: 'ESI-3 URGENT',
+                4: 'ESI-4 LESS URGENT',
+                5: 'ESI-5 NON-URGENT'
+            }
+            const esiColors = {
+                1: '#ef4444',
+                2: '#f97316',
+                3: '#eab308',
+                4: '#22c55e',
+                5: '#94a3b8'
+            }
             
-            document.getElementById('esiPreview').textContent = esiLabels[esi];
-            document.getElementById('esiPreview').style.color = esiColors[esi];
+            const preview = document.getElementById('esiPreview')
+            if (preview) {
+                preview.textContent = esiLabels[esi] || 'ESI-? UNKNOWN'
+                preview.style.color = esiColors[esi] || '#94a3b8'
+            }
             
-            // Add explanation
-            let explanation = 'Key finding: ';
-            if (vitals.spo2 <= 85) explanation += `SpO2 ${vitals.spo2}% triggers ESI-1 threshold`;
-            else if (vitals.gcs <= 8) explanation += `GCS ${vitals.gcs} triggers ESI-1 threshold`;
-            else if (vitals.bp_systolic < 80 && age >= 18) explanation += `SBP ${vitals.bp_systolic} triggers ESI-1 threshold`;
-            else if (vitals.heart_rate > 150) explanation += `HR ${vitals.heart_rate} triggers ESI-1 threshold`;
-            else if (vitals.spo2 <= 92) explanation += `SpO2 ${vitals.spo2}% triggers ESI-2 threshold`;
-            else if (vitals.gcs <= 13) explanation += `GCS ${vitals.gcs} triggers ESI-2 threshold`;
-            else if (vitals.bp_systolic <= 100 && age >= 18) explanation += `SBP ${vitals.bp_systolic} triggers ESI-2 threshold`;
-            else if (vitals.heart_rate >= 120) explanation += `HR ${vitals.heart_rate} triggers ESI-2 threshold`;
-            else if (vitals.temperature > 39.5) explanation += `Temp ${vitals.temperature}°C triggers ESI-2 threshold`;
-            else explanation += 'Vitals within normal ranges';
+            // Explanation
+            let explanation = 'Key finding: '
+            const v = vitals
+            if (v.spo2 <= 85) explanation += 'SpO2 ' + v.spo2 + '% = ESI-1 (critical)'
+            else if (v.gcs <= 8) explanation += 'GCS ' + v.gcs + ' = ESI-1 (critical)'
+            else if (v.bp_systolic < 80) explanation += 'SBP ' + v.bp_systolic + ' = ESI-1 (shock)'
+            else if (v.heart_rate > 150) explanation += 'HR ' + v.heart_rate + ' = ESI-1 (critical)'
+            else if (v.spo2 <= 92) explanation += 'SpO2 ' + v.spo2 + '% = ESI-2 (emergency)'
+            else if (v.gcs <= 13) explanation += 'GCS ' + v.gcs + ' = ESI-2 (emergency)'
+            else if (v.bp_systolic <= 100) explanation += 'SBP ' + v.bp_systolic + ' = ESI-2 (emergency)'
+            else if (v.heart_rate >= 120) explanation += 'HR ' + v.heart_rate + ' = ESI-2 (emergency)'
+            else if (v.temperature > 39.5) explanation += 'Temp ' + v.temperature + '°C = ESI-2 (emergency)'
+            else explanation += 'Vitals within manageable range'
             
-            document.getElementById('esiExplanation').textContent = explanation;
+            const expEl = document.getElementById('esiExplanation')
+            if (expEl) expEl.textContent = explanation
         }
 
         function submitRegistration() {
@@ -1928,7 +2007,7 @@
                 spo2: parseInt(document.getElementById('regSpO2').value) || 98,
                 respiratory_rate: parseInt(document.getElementById('regRR').value) || 16,
                 temperature: parseFloat(document.getElementById('regTemp').value) || 37.0,
-                pain_score: parseInt(document.getElementById('regPain')) || 0,
+                pain_score: parseInt(document.getElementById('regPain').value) || 0,
                 gcs: parseInt(document.getElementById('regGCS').value) || 15
             };
             
@@ -2080,7 +2159,7 @@
                         </div>
                     ` : ''}
                     
-                    ${appState.mode === 'human' && !isRegistered ? `
+                    ${appState.mode === 'human' ? `
                         <button class="mt-2 bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm w-full" onclick="event.stopPropagation(); openTriagePanel('${patient.patient_id}')">
                             TRIAGE THIS PATIENT →
                         </button>
