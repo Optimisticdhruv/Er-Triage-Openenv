@@ -75,8 +75,9 @@ def deploy():
         print(f"Creating space: {REPO_ID}")
         api.create_repo(repo_id=REPO_ID, repo_type="space",
             space_sdk="docker", private=False, exist_ok=True)
-    upload_files = ["Dockerfile","requirements.txt","openenv.yaml",
-                    "README.md",".dockerignore","inference.py"]
+    upload_files = ["pyproject.toml","inference.py","openenv.yaml",
+                    "Dockerfile","requirements.txt","README.md",
+                    ".dockerignore",".env.example"]
     upload_dirs = ["app","scenarios","static"]
     print("\nUploading files...")
     for fname in upload_files:
