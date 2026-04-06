@@ -9,7 +9,7 @@ Provides REST API endpoints for AI agent training and human interaction:
 - /metrics: Episode performance statistics
 - /: Interactive dashboard
 """
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -84,8 +84,8 @@ async def health():
 
 
 @app.get("/reset", response_model=ERState, tags=["openenv"])
-async def reset(task_id: str = "task_easy", seed: int = 42):
-    """Reset environment and start new episode.
+async def reset_get(task_id: str = "task_easy", seed: int = 42):
+    """Reset environment and start new episode (GET method).
     
     Args:
         task_id: Task configuration identifier
@@ -103,6 +103,34 @@ async def reset(task_id: str = "task_easy", seed: int = 42):
             detail=f"Unknown task_id '{task_id}'. Valid: {list(TASK_CONFIGS.keys())}"
         )
     return env.reset(task_id=task_id, seed=seed)
+
+@app.post("/reset", response_model=ERState, tags=["openenv"])
+async def reset_post(request: ResetRequest = None, 
+                     task_id: str = Query(default="task_easy"),
+                     seed: int = Query(default=42)):
+    """Reset environment and start new episode (POST method).
+    
+    Args:
+        request: Optional JSON body with task_id and seed
+        task_id: Task configuration identifier (from query params if not in body)
+        seed: Random seed for reproducible episodes (from query params if not in body)
+        
+    Returns:
+        Initial ERState observation
+        
+    Raises:
+        HTTPException: If task_id is invalid
+    """
+    # Accept task_id from body OR query params
+    actual_task = (request.task_id if request else None) or task_id
+    actual_seed = (request.seed if request else None) or seed
+    
+    if actual_task not in TASK_CONFIGS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown task_id '{actual_task}'. Valid: {list(TASK_CONFIGS.keys())}"
+        )
+    return env.reset(task_id=actual_task, seed=actual_seed)
 
 
 @app.post("/step", response_model=StepResult, tags=["openenv"])
