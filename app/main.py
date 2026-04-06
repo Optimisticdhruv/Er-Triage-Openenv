@@ -203,6 +203,136 @@ async def debug_reset(task_id: str):
         return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
 
 
+# OpenEnv compliance endpoints
+@app.get("/metadata", tags=["openenv"])
+async def get_metadata():
+    """Get environment metadata for OpenEnv compliance."""
+    return {
+        "name": "ER Triage Environment",
+        "description": "Hospital Emergency Room triage simulation where AI agents learn to prioritize patients using the Emergency Severity Index (ESI) system. Agents must assess patient vitals, chief complaints, and allocate appropriate bed resources while managing escalation decisions.",
+        "version": "1.0.0",
+        "environment_type": "medical_triage",
+        "observation_space": {
+            "type": "structured",
+            "description": "ER state with patient queue, bed occupancy, vitals, and alerts"
+        },
+        "action_space": {
+            "type": "discrete",
+            "description": "Triage actions: patient selection, ESI priority (1-4), bed assignment, escalation"
+        },
+        "reward_range": [-1.0, 1.0],
+        "max_episode_length": 100,
+        "tags": ["medical", "healthcare", "triage", "emergency", "esi", "hospital"],
+        "author": "optimisticdhruv",
+        "license": "MIT"
+    }
+
+
+@app.get("/schema", tags=["openenv"])
+async def get_schema():
+    """Get OpenEnv schema definitions for action, observation, and state."""
+    return {
+        "action": {
+            "type": "object",
+            "description": "Triage action with patient selection and priority assignment",
+            "required_fields": ["patient_id", "priority", "bed_type"],
+            "optional_fields": ["escalate", "reasoning"],
+            "constraints": {
+                "priority": {"min": 1, "max": 4},
+                "bed_type": ["resus", "acute", "minor", "waiting_area"]
+            }
+        },
+        "observation": {
+            "type": "object", 
+            "description": "Current ER state with patients and beds",
+            "key_fields": [
+                "task_id", "episode_id", "shift_time",
+                "patients_waiting", "beds", "patients_triaged",
+                "total_patients", "cumulative_reward", "episode_done"
+            ]
+        },
+        "state": {
+            "type": "object",
+            "description": "Complete step result with observation, reward, and done flag",
+            "fields": ["observation", "reward", "done", "info"]
+        }
+    }
+
+
+@app.post("/mcp", tags=["openenv"])
+async def mcp_endpoint(request: dict = None):
+    """Model Context Protocol endpoint for OpenEnv MCP compliance."""
+    if request is None:
+        request = {}
+    
+    # Handle JSON-RPC 2.0 requests
+    if "jsonrpc" in request:
+        method = request.get("method", "")
+        params = request.get("params", {})
+        request_id = request.get("id")
+        
+        if method == "initialize":
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {
+                        "tools": {
+                            "listChanged": False
+                        },
+                        "resources": {}
+                    },
+                    "serverInfo": {
+                        "name": "er-triage-openenv",
+                        "version": "1.0.0"
+                    }
+                }
+            }
+        elif method == "tools/list":
+            return {
+                "jsonrpc": "2.0", 
+                "id": request_id,
+                "result": {
+                    "tools": [
+                        {
+                            "name": "reset_environment",
+                            "description": "Reset the ER triage environment"
+                        },
+                        {
+                            "name": "step_environment", 
+                            "description": "Execute a triage action"
+                        },
+                        {
+                            "name": "get_state",
+                            "description": "Get current environment state"
+                        }
+                    ]
+                }
+            }
+        else:
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "error": {
+                    "code": -32601,
+                    "message": "Method not found"
+                }
+            }
+    
+    # Default response for non-JSON-RPC requests
+    return {
+        "jsonrpc": "2.0",
+        "id": None,
+        "result": {
+            "status": "ok",
+            "mcp_version": "2024-11-05",
+            "server": "er-triage-openenv",
+            "message": "MCP endpoint available - use JSON-RPC 2.0 format for tool calls"
+        }
+    }
+
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
     uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
