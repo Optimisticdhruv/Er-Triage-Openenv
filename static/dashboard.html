@@ -1750,31 +1750,30 @@
             // Check if this is a registered patient (local scoring)
             if (appState.selectedPatient.registered) {
                 const correctESI = appState.selectedPatient.correctESI
+                const patientId = appState.selectedPatient.patient_id
+                
                 const score = localCalculateScore(
                     priority, correctESI, bedType, escalate)
                 
-                // Add to local beds (only if not waiting area)
+                // Add bed assignment to localBeds
+                if (!appState.localBeds) appState.localBeds = []
+                
                 if (bedType !== 'waiting_area') {
-                    appState.localBeds = appState.localBeds || []
                     appState.localBeds.push({
-                        bed_id: bedType + '_reg_' + Date.now(),
+                        bed_id: bedType + '_' + patientId,
                         bed_type: bedType,
                         occupied: true,
-                        patient_id: appState.selectedPatient.patient_id
+                        patient_id: patientId
                     })
+                    console.log('Added to localBeds:', appState.localBeds)
                 }
                 
-                // Show feedback toast
-                const correctBed = {
-                    1:'resus', 2:'acute', 3:'acute',
-                    4:'minor', 5:'waiting_area'
-                }
+                // Show feedback
                 showToast(
-                    score >= 0.70 ? '✅ CORRECT!' :
-                    score >= 0.40 ? '⚠️ PARTIAL' : '❌ WRONG!',
-                    'Your: ESI-' + priority + 
-                    ' | Correct: ESI-' + correctESI +
-                    ' | Score: ' + score.toFixed(2),
+                    score >= 0.70 ? '✅ CORRECT! +' + score.toFixed(2) :
+                    score >= 0.40 ? '⚠️ PARTIAL +' + score.toFixed(2) : 
+                    '❌ WRONG! ' + score.toFixed(2),
+                    'Your ESI-' + priority + ' | Correct ESI-' + correctESI,
                     score >= 0.70 ? 'success' :
                     score >= 0.40 ? 'warning' : 'danger',
                     4000
@@ -1782,25 +1781,21 @@
                 
                 // Remove from registered patients
                 appState.registeredPatients = appState.registeredPatients
-                    .filter(p => p.patient_id !== 
-                            appState.selectedPatient.patient_id)
-                delete appState.patientsMap[appState.selectedPatient.patient_id]
+                    .filter(p => p.patient_id !== patientId)
+                delete appState.patientsMap[patientId]
                 
                 closeTriagePanel()
                 appState.selectedPatient = null
                 
-                // Get current backend beds
+                // Build merged bed list and render
                 const backendBeds = appState.episodeData?.beds || []
+                const allBeds = [...backendBeds, ...appState.localBeds]
                 
-                // Merge and render
-                const allBeds = [...backendBeds, ...(appState.localBeds || [])]
-                console.log('Rendering beds after reg triage:', allBeds)
+                console.log('Calling renderBedBoard with:', allBeds.length, 'beds')
+                console.log('localBeds:', JSON.stringify(appState.localBeds))
+                
                 renderBedBoard(allBeds)
-                
-                // Update queue
-                renderPatientQueue(
-                    appState.episodeData?.patients_waiting || [])
-                
+                renderPatientQueue(appState.episodeData?.patients_waiting || [])
                 renderActionLog()
                 return
             } else {
@@ -2216,68 +2211,102 @@
         }
 
         function renderBedBoard(beds) {
-            const resusBeds = beds.filter(b => b.bed_type === 'resus');
-            const acuteBeds = beds.filter(b => b.bed_type === 'acute');
-            const minorBeds = beds.filter(b => b.bed_type === 'minor');
-            
-            // Fill up to max capacity with empty beds
-            const MAX_RESUS = 5
-            const MAX_ACUTE = 8
-            const MAX_MINOR = 10
-            
-            function padBeds(beds, max, type) {
-                const result = [...beds]
-                while (result.length < max) {
-                    result.push({
-                        bed_id: type + '_empty_' + result.length,
-                        bed_type: type,
-                        occupied: false,
-                        patient_id: null
-                    })
-                }
-                return result
-            }
-            
-            const allResus = padBeds(resusBeds, MAX_RESUS, 'resus')
-            const allAcute = padBeds(acuteBeds, MAX_ACUTE, 'acute')
-            const allMinor = padBeds(minorBeds, MAX_MINOR, 'minor')
-            
-            document.getElementById('resusGrid').innerHTML = renderBedTiles(allResus, 'resus')
-            document.getElementById('acuteGrid').innerHTML = renderBedTiles(allAcute, 'acute')
-            document.getElementById('minorGrid').innerHTML = renderBedTiles(allMinor, 'minor')
-            
-            // Update counts
-            const resusOccupied = resusBeds.filter(b => b.occupied).length
-            const acuteOccupied = acuteBeds.filter(b => b.occupied).length
-            const minorOccupied = minorBeds.filter(b => b.occupied).length
-            
-            safeSetText('resusCount', resusOccupied)
-            safeSetText('acuteCount', acuteOccupied)
-            safeSetText('minorCount', minorOccupied)
-            
-            // Update occupancy bars
-            const resusEmpty = Math.max(0, MAX_RESUS - resusOccupied)
-            const acuteEmpty = Math.max(0, MAX_ACUTE - acuteOccupied)
-            const minorEmpty = Math.max(0, MAX_MINOR - minorOccupied)
-            
-            safeSetText('resusBar', 
-                '█'.repeat(resusOccupied) + '░'.repeat(resusEmpty))
-            safeSetText('resusPercent', resusOccupied)
-            safeSetText('acuteBar',
-                '█'.repeat(acuteOccupied) + '░'.repeat(acuteEmpty))
-            safeSetText('acutePercent', acuteOccupied)
-            safeSetText('minorBar',
-                '█'.repeat(minorOccupied) + '░'.repeat(minorEmpty))
-            safeSetText('minorPercent', minorOccupied)
+    if (!beds) beds = []
+    
+    console.log('renderBedBoard called with', beds.length, 'beds')
+    
+    // Separate by type
+    const resusBeds = beds.filter(b => b.bed_type === 'resus')
+    const acuteBeds = beds.filter(b => b.bed_type === 'acute')
+    const minorBeds = beds.filter(b => b.bed_type === 'minor')
+    
+    console.log('Resus beds:', resusBeds.length, 
+                'occupied:', resusBeds.filter(b=>b.occupied).length)
+    console.log('Acute beds:', acuteBeds.length,
+                'occupied:', acuteBeds.filter(b=>b.occupied).length)
+    console.log('Minor beds:', minorBeds.length,
+                'occupied:', minorBeds.filter(b=>b.occupied).length)
+    
+    // Pad to minimum display count
+    function padToMin(beds, min, type) {
+        const result = [...beds]
+        while (result.length < min) {
+            result.push({
+                bed_id: type + '_empty_' + result.length,
+                bed_type: type,
+                occupied: false,
+                patient_id: null
+            })
         }
+        return result
+    }
+    
+    const displayResus = padToMin(resusBeds, 5, 'resus')
+    const displayAcute = padToMin(acuteBeds, 8, 'acute')
+    const displayMinor = padToMin(minorBeds, 10, 'minor')
+    
+    // Find grid elements - try multiple possible IDs
+    const resusGrid = document.getElementById('resusGrid') || 
+                      document.getElementById('resus-grid') ||
+                      document.querySelector('[data-grid="resus"]')
+    const acuteGrid = document.getElementById('acuteGrid') ||
+                      document.getElementById('acute-grid') ||
+                      document.querySelector('[data-grid="acute"]')
+    const minorGrid = document.getElementById('minorGrid') ||
+                      document.getElementById('minor-grid') ||
+                      document.querySelector('[data-grid="minor"]')
+    
+    console.log('Grid elements found:', 
+                !!resusGrid, !!acuteGrid, !!minorGrid)
+    
+    if (resusGrid) resusGrid.innerHTML = renderBedTiles(displayResus, 'resus')
+    if (acuteGrid) acuteGrid.innerHTML = renderBedTiles(displayAcute, 'acute')
+    if (minorGrid) minorGrid.innerHTML = renderBedTiles(displayMinor, 'minor')
+    
+    // Update counts
+    const resusOccupied = resusBeds.filter(b => b.occupied).length
+    const acuteOccupied = acuteBeds.filter(b => b.occupied).length
+    const minorOccupied = minorBeds.filter(b => b.occupied).length
+    
+    safeSetText('resusCount', resusOccupied)
+    safeSetText('acuteCount', acuteOccupied)
+    safeSetText('minorCount', minorOccupied)
+    
+    // Update occupancy bars
+    const r = resusOccupied
+    const a = acuteOccupied
+    const m = minorOccupied
+    
+    safeSetText('resusBar', '█'.repeat(r) + '░'.repeat(Math.max(0,5-r)))
+    safeSetText('acuteBar', '█'.repeat(a) + '░'.repeat(Math.max(0,8-a)))
+    safeSetText('minorBar', '█'.repeat(m) + '░'.repeat(Math.max(0,10-m)))
+    safeSetText('resusPercent', r)
+    safeSetText('acutePercent', a)
+    safeSetText('minorPercent', m)
+}
 
         function renderBedTiles(beds, type) {
-            return beds.map(bed => `
-                <div class="bed-tile ${bed.occupied ? `occupied ${type}` : ''}">
-                    ${bed.occupied ? bed.patient_id : 'EMPTY'}
-                </div>
-            `).join('');
-        }
+    if (!beds || beds.length === 0) {
+        return '<div style="color:#64748b;padding:8px;">No beds</div>'
+    }
+    return beds.map(bed => {
+        const isOccupied = bed.occupied === true
+        const bgColor = isOccupied ? 
+            (type === 'resus' ? '#ef4444' : 
+             type === 'acute' ? '#f97316' : '#22c55e') 
+            : '#374151'
+        const textColor = isOccupied ? 'white' : '#94a3b8'
+        const label = isOccupied ? 
+            (bed.patient_id || 'OCCUPIED') : 'EMPTY'
+        
+        return '<div style="background:' + bgColor + 
+               ';color:' + textColor + 
+               ';padding:12px;border-radius:6px;' +
+               'text-align:center;font-size:14px;' +
+               'font-weight:bold;border:1px solid #475569">' +
+               label + '</div>'
+    }).join('')
+}
 
         function renderMetricsRow(state, metrics) {
             if (!state) return;
