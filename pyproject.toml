@@ -1,3 +1,6 @@
+# ER Triage OpenEnv - Hospital Emergency Room Triage Simulation
+# Compatible with OpenEnv multi-mode deployment
+
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
