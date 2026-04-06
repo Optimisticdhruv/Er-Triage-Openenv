@@ -1753,44 +1753,53 @@
                 const score = localCalculateScore(
                     priority, correctESI, bedType, escalate)
                 
-                // ADD TO LOCAL BEDS
+                // Add to local beds (only if not waiting area)
                 if (bedType !== 'waiting_area') {
-                    // Find an empty local bed slot
-                    const bedId = bedType + '_reg_' + Date.now()
+                    appState.localBeds = appState.localBeds || []
                     appState.localBeds.push({
-                        bed_id: bedId,
+                        bed_id: bedType + '_reg_' + Date.now(),
                         bed_type: bedType,
                         occupied: true,
                         patient_id: appState.selectedPatient.patient_id
                     })
                 }
                 
+                // Show feedback toast
                 const correctBed = {
-                    1:'resus', 2:'acute', 3:'acute', 4:'minor', 5:'waiting_area'
+                    1:'resus', 2:'acute', 3:'acute',
+                    4:'minor', 5:'waiting_area'
                 }
-                
                 showToast(
-                    score >= 0.70 ? '✅ CORRECT!' : score >= 0.40 ? '⚠️ PARTIAL' : '❌ WRONG!',
-                    'Your: ESI-' + priority + ' | Correct: ESI-' + correctESI + 
-                    '\nBed: ' + bedType + ' | Correct: ' + correctBed[correctESI] +
-                    '\nScore: ' + score.toFixed(2),
-                    score >= 0.70 ? 'success' : score >= 0.40 ? 'warning' : 'danger',
+                    score >= 0.70 ? '✅ CORRECT!' :
+                    score >= 0.40 ? '⚠️ PARTIAL' : '❌ WRONG!',
+                    'Your: ESI-' + priority + 
+                    ' | Correct: ESI-' + correctESI +
+                    ' | Score: ' + score.toFixed(2),
+                    score >= 0.70 ? 'success' :
+                    score >= 0.40 ? 'warning' : 'danger',
                     4000
                 )
                 
+                // Remove from registered patients
                 appState.registeredPatients = appState.registeredPatients
-                    .filter(p => p.patient_id !== appState.selectedPatient.patient_id)
+                    .filter(p => p.patient_id !== 
+                            appState.selectedPatient.patient_id)
                 delete appState.patientsMap[appState.selectedPatient.patient_id]
                 
                 closeTriagePanel()
                 appState.selectedPatient = null
                 
-                // Update queue and beds
-                renderPatientQueue(appState.episodeData?.patients_waiting || [])
-                
-                // Re-render bed board with merged beds
+                // Get current backend beds
                 const backendBeds = appState.episodeData?.beds || []
-                renderBedBoard([...backendBeds, ...appState.localBeds])
+                
+                // Merge and render
+                const allBeds = [...backendBeds, ...(appState.localBeds || [])]
+                console.log('Rendering beds after reg triage:', allBeds)
+                renderBedBoard(allBeds)
+                
+                // Update queue
+                renderPatientQueue(
+                    appState.episodeData?.patients_waiting || [])
                 
                 renderActionLog()
                 return
