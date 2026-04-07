@@ -37,9 +37,9 @@ jobs:
         with:
           python-version: "3.10"
       - name: Install dependencies
-        run: pip install -r requirements.txt openenv
+        run: pip install -r requirements.txt
       - name: Start server
-        run: uvicorn app.main:app --port 7860 &
+        run: uvicorn server.app:main --port 7860 &
       - name: Wait for server
         run: |
           for i in $(seq 1 10); do
