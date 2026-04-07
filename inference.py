@@ -13,15 +13,20 @@ import requests
 
 load_dotenv()
 
-# MANDATORY env variables per problem statement
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-API_BASE_URL = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
-MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
-HF_TOKEN = os.environ.get("HF_TOKEN", "")
+# Use EXACTLY these variable names - judges inject these
+API_BASE_URL = os.environ.get("API_BASE_URL", "https://openrouter.ai/api/v1")
+API_KEY = os.environ.get("API_KEY") or os.environ.get("HF_TOKEN") or os.environ.get("OPENAI_API_KEY")
+MODEL_NAME = os.environ.get("MODEL_NAME", "deepseek/deepseek-chat-v3-0324:free")
+
+# Initialize client with judge's proxy
+client = OpenAI(
+    base_url=API_BASE_URL,
+    api_key=API_KEY
+)
+
+# Other environment variables
 SEED = int(os.environ.get("SEED", "42"))
 ENV_URL = os.environ.get("ENVIRONMENT_URL", "http://localhost:7860")
-
-client = OpenAI(api_key=OPENAI_API_KEY, base_url=API_BASE_URL)
 
 SYSTEM_PROMPT = """You are an experienced emergency room triage nurse.
 Assess patients and make a triage decision.
